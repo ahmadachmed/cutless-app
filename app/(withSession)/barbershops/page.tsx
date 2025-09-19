@@ -33,7 +33,9 @@ export default function BarbershopsPage() {
 
   async function fetchBarbershops() {
     try {
-      const res = await fetch("/api/barbershops");
+      const res = await fetch("/api/barbershops", {
+        credentials: "include",
+      })
       if (res.ok) {
         const data = await res.json();
         setBarbershops(data);
