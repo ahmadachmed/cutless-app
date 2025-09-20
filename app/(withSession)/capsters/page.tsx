@@ -1,5 +1,8 @@
 "use client";
 
+import { stat } from "fs";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 type Capster = {
@@ -10,6 +13,8 @@ type Capster = {
 };
 
 export default function CapstersPage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const [capsters, setCapsters] = useState<Capster[]>([]);
   const [userId, setUserId] = useState("");
   const [barbershopId, setBarbershopId] = useState("");
@@ -17,11 +22,25 @@ export default function CapstersPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch("/api/capsters")
-      .then((res) => res.json())
-      .then(setCapsters)
-      .catch(console.error);
-  }, []);
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.role !== "owner") {
+      alert("Access denied. Only owners can manage capsters.");
+      router.push("/");
+    }
+  }, [status, session]);
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.role === "owner")
+      fetch("/api/capsters")
+        .then((res) => res.json())
+        .then(setCapsters)
+        .catch(console.error);
+  }, [status, session]);
 
   async function handleAdd() {
     if (!userId || !barbershopId) {
@@ -34,14 +53,18 @@ export default function CapstersPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, barbershopId, specialization }),
+        credentials: "include",
       });
       if (res.ok) {
-        const newCapster = await res.json();
-        setCapsters((prev) => [...prev, newCapster]);
+        // After successful add, reload the full list so related objects are included
+        await fetch("/api/capsters", { credentials: "include" })
+          .then((res) => res.json())
+          .then(setCapsters);
         setUserId("");
         setBarbershopId("");
         setSpecialization("");
-      } else {
+      }
+      else {
         alert("Failed to add capster");
       }
     } catch {
@@ -54,7 +77,10 @@ export default function CapstersPage() {
     if (!confirm("Are you sure you want to delete this capster?")) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/capsters?id=${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/capsters?id=${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
       if (res.ok) {
         setCapsters((prev) => prev.filter((c) => c.id !== id));
       } else {
@@ -67,47 +93,72 @@ export default function CapstersPage() {
   }
 
   return (
-    <div className="max-w-xl mx-auto mt-10 p-4 border rounded">
-      <h1 className="text-2xl font-semibold mb-4">Capster Management</h1>
+    <div className="max-w-xl mx-auto mt-12 p-6 border rounded-lg shadow-md bg-white">
+      <h1 className="text-3xl font-bold mb-6 text-center">Capster Management</h1>
 
-      <div className="mb-4 space-y-2">
-        <input
-          placeholder="User ID"
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          className="w-full border p-2 rounded"
-        />
-        <input
-          placeholder="Barbershop ID"
-          value={barbershopId}
-          onChange={(e) => setBarbershopId(e.target.value)}
-          className="w-full border p-2 rounded"
-        />
-        <input
-          placeholder="Specialization (optional)"
-          value={specialization}
-          onChange={(e) => setSpecialization(e.target.value)}
-          className="w-full border p-2 rounded"
-        />
+      <div className="mb-6 space-y-4">
+        <div>
+          <label htmlFor="userId" className="block text-sm font-medium text-gray-700 mb-1">
+            User ID
+          </label>
+          <input
+            id="userId"
+            placeholder="User ID"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            className="w-full border border-gray-300 p-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="barbershopId" className="block text-sm font-medium text-gray-700 mb-1">
+            Barbershop ID
+          </label>
+          <input
+            id="barbershopId"
+            placeholder="Barbershop ID"
+            value={barbershopId}
+            onChange={(e) => setBarbershopId(e.target.value)}
+            className="w-full border border-gray-300 p-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="specialization" className="block text-sm font-medium text-gray-700 mb-1">
+            Specialization (optional)
+          </label>
+          <input
+            id="specialization"
+            placeholder="Specialization"
+            value={specialization}
+            onChange={(e) => setSpecialization(e.target.value)}
+            className="w-full border border-gray-300 p-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
         <button
           disabled={loading}
           onClick={handleAdd}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+          className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400"
         >
           {loading ? "Adding..." : "Add Capster"}
         </button>
       </div>
 
-      <ul>
+      <ul className="space-y-3">
         {capsters.map((c) => (
-          <li key={c.id} className="mb-2 p-2 border rounded flex justify-between items-center">
-            <div>
-              <strong>{c.user.name || c.user.email}</strong> - {c.barbershop.name}{" "}
-              {c.specialization && `(${c.specialization})`}
+          <li
+            key={c.id}
+            className="flex justify-between items-center p-4 border rounded-md shadow-sm hover:shadow-md transition-shadow bg-gray-50"
+          >
+            <div className="text-gray-800">
+              <strong className="font-semibold">{c.user?.name || c.user?.email}</strong> -{" "}
+              <span className="italic text-gray-600">{c.barbershop?.name}</span>{" "}
+              {c.specialization && <span className="text-blue-600">({c.specialization})</span>}
             </div>
             <button
               onClick={() => handleDelete(c.id)}
-              className="bg-red-600 text-white px-3 py-1 rounded"
+              className="bg-red-600 text-white px-4 py-1 rounded-md hover:bg-red-700 transition-colors"
             >
               Delete
             </button>

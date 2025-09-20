@@ -12,14 +12,23 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "your-email@example.com" },
+        email: {
+          label: "Email",
+          type: "email",
+          placeholder: "your-email@example.com",
+        },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials) return null;
-        const user = await prisma.user.findUnique({ where: { email: credentials.email } });
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email },
+        });
         if (!user || !user.password) return null;
-        const isValid = await bcrypt.compare(credentials.password, user.password);
+        const isValid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        );
         if (!isValid) return null;
         return user;
       },
@@ -29,21 +38,22 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user, account, profile, isNewUser }: { 
-      token: any; 
-      user?: User | any; 
-      account?: any; 
-      profile?: any; 
-      isNewUser?: boolean 
-    }) {
-      if (user && user.role) token.role = user.role;
+    async jwt({ token, user }: { token: any; user?: User | any }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
       return token;
     },
     async session({ session, token }: { session: any; token: any }) {
-      if (session.user) session.user.role = token.role;
+      if (session.user) {
+        session.user.id = token.id; // <-- required for backend relations!
+        session.user.role = token.role;
+      }
       return session;
     },
   },
+
   pages: {
     signIn: "/auth/signin",
     error: "/auth/signin",

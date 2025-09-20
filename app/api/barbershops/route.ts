@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Optionally show only barbershops owned by the user if owner
-  let barbershops;
+  let barbershops: any[]; // You can replace 'any' with a more specific type if available
 
   if (session.user?.role === "owner") {
     barbershops = await prisma.barbershop.findMany({
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "owner") {
+  if (!session || session.user?.role !== "owner" || !session.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   const barbershop = await prisma.barbershop.create({
     data: {
       name,
-      ownerId: session.user.id,
+      ownerId: session.user.id as string,
       subscriptionPlan,
     },
   });

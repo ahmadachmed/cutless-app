@@ -1,24 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api//auth/[...nextauth]/route"; // adjust path as needed
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
+// Extend the Session user type to include 'role' and 'id'
+declare module "next-auth" {
+  interface Session {
+    user?: {
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      role?: string;
+      id?: string;
+    };
+  }
+}
 
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
-  // Allow only owners or capsters to fetch list? Or public? Adjust as needed.
-  // This example allows all logged-in users.
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const capsters = await prisma.capster.findMany({
-    include: {
-      user: true,
-      barbershop: true,
-    },
-  });
+  // For owners, show capsters linked to their barbershops
+  // Adjust business rule if needed
+  let capsters: any[] = [];
+  if (session.user?.role === "owner") {
+    // Get the barbershops owned by this user
+    const barbershops = await prisma.barbershop.findMany({
+      where: { ownerId: session.user.id },
+      select: { id: true },
+    });
+    const barbershopIds = barbershops.map((b) => b.id);
+    capsters = await prisma.capster.findMany({
+      where: { barbershopId: { in: barbershopIds } },
+      include: {
+        user: true,
+        barbershop: true,
+      },
+    });
+  } else {
+    // For other roles, optionally return empty or all capsters if applicable
+    capsters = [];
+  }
 
   return NextResponse.json(capsters);
 }
@@ -35,8 +61,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const barbershop = await prisma.barbershop.findUnique({ where: { id: barbershopId } });
+  // Verify user exists
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
 
+  // Verify ownership of the barbershop
+  const barbershop = await prisma.barbershop.findUnique({ where: { id: barbershopId } });
   if (!barbershop || barbershop.ownerId !== session.user.id) {
     return NextResponse.json({ error: "Unauthorized or barbershop not found" }, { status: 403 });
   }
@@ -56,7 +88,7 @@ export async function PUT(req: NextRequest) {
 
   const { id, specialization } = await req.json();
 
-  if (!id || !specialization) {
+  if (!id || specialization === undefined) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
