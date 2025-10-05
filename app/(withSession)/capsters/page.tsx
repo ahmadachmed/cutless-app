@@ -12,11 +12,17 @@ type Capster = {
   barbershop: { id: string; name: string };
 };
 
+type Barbershop = {
+  id: string;
+  name: string;
+}
+
 export default function CapstersPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [capsters, setCapsters] = useState<Capster[]>([]);
   const [userId, setUserId] = useState("");
+  const [barbershops, setBarbershops] = useState<Barbershop[]>([]);
   const [barbershopId, setBarbershopId] = useState("");
   const [specialization, setSpecialization] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,6 +46,17 @@ export default function CapstersPage() {
         .then((res) => res.json())
         .then(setCapsters)
         .catch(console.error);
+  }, [status, session]);
+
+  useEffect(() => {
+    async function fetchBarbershops() {
+      if (status === "authenticated" && session?.user?.role === "owner")
+        fetch("/api/barbershops")
+          .then((res) => res.json())
+          .then(setBarbershops)
+          .catch(console.error);
+    }
+    fetchBarbershops();
   }, [status, session]);
 
   async function handleAdd() {
@@ -112,15 +129,21 @@ export default function CapstersPage() {
 
         <div>
           <label htmlFor="barbershopId" className="block text-sm font-medium text-gray-700 mb-1">
-            Barbershop ID
+            Barbershop
           </label>
-          <input
+          <select
             id="barbershopId"
-            placeholder="Barbershop ID"
             value={barbershopId}
             onChange={(e) => setBarbershopId(e.target.value)}
             className="w-full border border-gray-300 p-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          >
+            <option value="">Select a Barbershop</option>
+            {barbershops.map((shop) => (
+              <option key={shop.id} value={shop.id}>
+                {shop.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
