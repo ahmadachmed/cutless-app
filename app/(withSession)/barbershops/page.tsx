@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 type Barbershop = {
   id: string;
   name: string;
+  address: string;
+  phoneNumber: string;
   subscriptionPlan: string;
 };
 
@@ -15,11 +17,18 @@ export default function BarbershopsPage() {
   const router = useRouter();
 
   const [barbershops, setBarbershops] = useState<Barbershop[]>([]);
+
   const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [subscriptionPlan, setSubscriptionPlan] = useState("free");
+
   const [loading, setLoading] = useState(false);
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+  const [editPhoneNumber, setEditPhoneNumber] = useState("");
   const [editSubscriptionPlan, setEditSubscriptionPlan] = useState("free");
 
   useEffect(() => {
@@ -59,18 +68,24 @@ export default function BarbershopsPage() {
 
   async function handleAdd() {
     if (!name) return alert("Please enter a barbershop name");
+    if (!address) return alert("Please enter an address");
+    if (!phoneNumber) return alert("Please enter a phone number");
+
     setLoading(true);
     try {
       const res = await fetch("/api/barbershops", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, subscriptionPlan }),
+        body: JSON.stringify({ name, address, phoneNumber, subscriptionPlan }),
         credentials: "include",
       });
       if (res.ok) {
         const newShop = await res.json();
         setBarbershops((prev) => [...prev, newShop]);
         setName("");
+        setAddress("");
+        setPhoneNumber("");
+        setSubscriptionPlan("free");
       } else {
         const errorData = await res.json();
         alert("Failed to add barbershop: " + (errorData.error || "Unknown error"));
@@ -81,24 +96,28 @@ export default function BarbershopsPage() {
     setLoading(false);
   }
 
-  // Start editing barbershop
   function startEdit(shop: Barbershop) {
     setEditingId(shop.id);
     setEditName(shop.name);
+    setEditAddress(shop.address);
+    setEditPhoneNumber(shop.phoneNumber);
     setEditSubscriptionPlan(shop.subscriptionPlan);
   }
 
-  // Cancel editing
   function cancelEdit() {
     setEditingId(null);
     setEditName("");
+    setEditAddress("");
+    setEditPhoneNumber("");
     setEditSubscriptionPlan("free");
   }
 
-  // Save edited barbershop
   async function saveEdit() {
     if (!editName) return alert("Please enter a barbershop name");
+    if (!editAddress) return alert("Please enter an address");
+    if (!editPhoneNumber) return alert("Please enter a phone number");
     if (!editingId) return;
+
     setLoading(true);
     try {
       const res = await fetch("/api/barbershops", {
@@ -107,6 +126,8 @@ export default function BarbershopsPage() {
         body: JSON.stringify({
           id: editingId,
           name: editName,
+          address: editAddress,
+          phoneNumber: editPhoneNumber,
           subscriptionPlan: editSubscriptionPlan,
         }),
         credentials: "include",
@@ -127,7 +148,6 @@ export default function BarbershopsPage() {
     setLoading(false);
   }
 
-  // Delete barbershop
   async function deleteBarbershop(id: string) {
     if (!confirm("Are you sure you want to delete this barbershop?")) return;
     setLoading(true);
@@ -165,12 +185,24 @@ export default function BarbershopsPage() {
               placeholder="Barbershop name"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              className="border p-2 rounded mr-2 w-2/3"
+              className="border p-2 rounded mr-2 w-full mb-2"
+            />
+            <input
+              placeholder="Address"
+              value={editAddress}
+              onChange={(e) => setEditAddress(e.target.value)}
+              className="border p-2 rounded mr-2 w-full mb-2"
+            />
+            <input
+              placeholder="Phone Number"
+              value={editPhoneNumber}
+              onChange={(e) => setEditPhoneNumber(e.target.value)}
+              className="border p-2 rounded mr-2 w-full mb-2"
             />
             <select
               value={editSubscriptionPlan}
               onChange={(e) => setEditSubscriptionPlan(e.target.value)}
-              className="border p-2 rounded"
+              className="border p-2 rounded mb-2"
             >
               <option value="free">Free</option>
               <option value="pro">Pro</option>
@@ -179,14 +211,14 @@ export default function BarbershopsPage() {
             <button
               disabled={loading}
               onClick={saveEdit}
-              className="ml-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
+              className="mr-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
             >
               {loading ? "Saving..." : "Save"}
             </button>
             <button
               disabled={loading}
               onClick={cancelEdit}
-              className="ml-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 disabled:bg-gray-300"
+              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 disabled:bg-gray-300"
             >
               Cancel
             </button>
@@ -197,12 +229,24 @@ export default function BarbershopsPage() {
               placeholder="New barbershop name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="border p-2 rounded mr-2 w-2/3"
+              className="border p-2 rounded mr-2 w-full mb-2"
+            />
+            <input
+              placeholder="Address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="border p-2 rounded mr-2 w-full mb-2"
+            />
+            <input
+              placeholder="Phone Number"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="border p-2 rounded mr-2 w-full mb-2"
             />
             <select
               value={subscriptionPlan}
               onChange={(e) => setSubscriptionPlan(e.target.value)}
-              className="border p-2 rounded"
+              className="border p-2 rounded mb-2"
             >
               <option value="free">Free</option>
               <option value="pro">Pro</option>
@@ -211,7 +255,7 @@ export default function BarbershopsPage() {
             <button
               disabled={loading}
               onClick={handleAdd}
-              className="ml-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
             >
               {loading ? "Adding..." : "Add Barbershop"}
             </button>

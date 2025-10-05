@@ -65,6 +65,16 @@ export async function POST(req: NextRequest) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  } else if (user.role !== "capster") {
+    return NextResponse.json({ error: "User is not registered as a capster" }, { status: 400 });
+  }
+
+  //verify user already a capster in the same barbershop
+  const existingCapster = await prisma.capster.findFirst({
+    where: { userId, barbershopId },
+  });
+  if (existingCapster) {
+    return NextResponse.json({ error: "User is already a capster in this barbershop" }, { status: 400 });
   }
 
   // Verify ownership of the barbershop

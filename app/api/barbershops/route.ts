@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // adjust as necessary
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const prisma = new PrismaClient();
 
@@ -11,43 +11,53 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Optionally show only barbershops owned by the user if owner
-  let barbershops: any[]; // You can replace 'any' with a more specific type if available
-
+  // Jika owner, hanya ambil barbershop miliknya
   if (session.user?.role === "owner") {
-    barbershops = await prisma.barbershop.findMany({
+    const barbershops = await prisma.barbershop.findMany({
       where: { ownerId: session.user.id },
-      include: { owner: true },
+      include: { capsters: true, owner: true },
     });
-  } else {
-    // For other roles, you can decide what to show or return empty list
-    barbershops = [];
-  }
+    return NextResponse.json(barbershops);
+  } 
 
-  return NextResponse.json(barbershops);
+  // Untuk role lain, bisa sesuaikan kebijakan, misal semua barbershop atau kosong
+  return NextResponse.json([], { status: 200 });
 }
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "owner" || !session.user?.id) {
+  if (!session || session.user?.role !== "owner") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, subscriptionPlan } = await req.json();
+  const { name, address, phoneNumber, subscriptionPlan } = await req.json();
 
-  if (!name || !subscriptionPlan) {
+  if (!name || !address || !phoneNumber || !subscriptionPlan) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const barbershop = await prisma.barbershop.create({
-    data: {
-      name,
-      ownerId: session.user.id as string,
-      subscriptionPlan,
-    },
-  });
-
-  return NextResponse.json(barbershop, { status: 201 });
+  try {
+    if (!session.user.id) {
+      return NextResponse.json({ error: "Owner ID is missing" }, { status: 400 });
+    }
+    const barbershop = await prisma.barbershop.create({
+      data: {
+        name,
+        address,
+        phoneNumber,
+        subscriptionPlan,
+        ownerId: session.user.id as string,
+      },
+    });
+    return NextResponse.json(barbershop, { status: 201 });
+  } catch (error: any) {
+    if (error.code === 'P2002') {
+      // Unique constraint failed
+      return NextResponse.json({ error: "Barbershop name must be unique" }, { status: 409 });
+    }
+    console.error("Error creating barbershop:",error);
+    return NextResponse.json({ error: "Failed to create barbershop" }, { status: 500 });
+  }
 }
 
 export async function PUT(req: NextRequest) {
@@ -56,9 +66,9 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id, name, subscriptionPlan } = await req.json();
+  const { id, name, address, phoneNumber, subscriptionPlan } = await req.json();
 
-  if (!id || !name || !subscriptionPlan) {
+  if (!id || !name || !address || !phoneNumber || !subscriptionPlan) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
@@ -68,12 +78,24 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Not found or unauthorized" }, { status: 404 });
   }
 
-  const updatedBarbershop = await prisma.barbershop.update({
-    where: { id },
-    data: { name, subscriptionPlan },
-  });
-
-  return NextResponse.json(updatedBarbershop);
+  try {
+    const updatedBarbershop = await prisma.barbershop.update({
+      where: { id },
+      data: {
+        name,
+        address,
+        phoneNumber,
+        subscriptionPlan,
+        updatedAt: new Date(),
+      },
+    });
+    return NextResponse.json(updatedBarbershop);
+  } catch (error: any) {
+    if (error.code === 'P2002') {
+      return NextResponse.json({ error: "Barbershop name must be unique" }, { status: 409 });
+    }
+    return NextResponse.json({ error: "Failed to update barbershop" }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: NextRequest) {
@@ -97,5 +119,5 @@ export async function DELETE(req: NextRequest) {
 
   await prisma.barbershop.delete({ where: { id } });
 
-  return NextResponse.json({ message: "Deleted successfully" });
+  return NextResponse.json({ message: "Barbershop deleted successfully" });
 }

@@ -99,11 +99,11 @@ export default function CapstersPage() {
       <div className="mb-6 space-y-4">
         <div>
           <label htmlFor="userId" className="block text-sm font-medium text-gray-700 mb-1">
-            User ID
+            Capster User ID (user who already registered as a capster)
           </label>
           <input
             id="userId"
-            placeholder="User ID"
+            placeholder="Capster User ID"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
             className="w-full border border-gray-300 p-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
