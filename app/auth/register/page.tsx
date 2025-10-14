@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AuthCard } from "@/components/ui/Card/authCard";
+import { Button } from "@/components/ui/Button/button";
+import { Input } from "@/components/ui/Field/input";
+import { Select } from "@/components/ui/Field/select";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -36,65 +40,47 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 border rounded shadow">
-      <h1 className="text-2xl mb-4 font-semibold">Register</h1>
-      {error && <div className="mb-4 p-2 bg-red-200 text-red-800 rounded">{error}</div>}
+    <div className="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#3b82f620_1px,transparent_1px),linear-gradient(to_bottom,#3b82f620_1px,transparent_1px)] bg-[size:64px_64px]">
+      <div className="flex items-center justify-center min-h-screen">
+        <AuthCard className="w-full max-w-md" title="Register">
+          {error && <div className="mb-4 p-2 bg-red-200 text-red-800 rounded">{error}</div>}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <Input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              placeholder="Name" />
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="Email" />
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <Select onChange={(e) => setRole(e.target.value)} value={role} >
+              <option value="customer">Customer</option>
+              <option value="capster">Capster</option>
+              <option value="owner">Owner</option>
+            </Select>
 
-      <form onSubmit={handleSubmit}>
-        <label className="block mb-2">
-          Name
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            className="w-full p-2 border rounded mt-1"
-          />
-        </label>
-
-        <label className="block mb-2">
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full p-2 border rounded mt-1"
-          />
-        </label>
-
-        <label className="block mb-2">
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full p-2 border rounded mt-1"
-          />
-        </label>
-
-        <label className="block mb-4">
-          Role
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full p-2 border rounded mt-1"
-          >
-            <option value="customer">Customer</option>
-            <option value="capster">Capster</option>
-            <option value="owner">Owner</option>
-          </select>
-        </label>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 disabled:bg-gray-400"
-        >
-          {loading ? "Registering..." : "Register"}
-        </button>
-      </form>
+            <Button variant="primary" type="submit" className="w-full">
+              {loading ? "Registering..." : "Register"}
+            </Button>
+          </form>
+          <div className="text-center mt-4">
+                <a href="/auth/signin" className="text-sm hover:underline">
+                  Already have an account? Sign In
+                </a>
+              </div>
+        </AuthCard>
+      </div>
     </div>
   );
 }
