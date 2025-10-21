@@ -3,6 +3,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { PrismaClient, User } from "@prisma/client";
 import bcrypt from "bcrypt";
+import { SigninFormSchema } from "@/app/lib/definitions";
+import { Sign } from "crypto";
+import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -20,15 +23,17 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials) return null;
+        const result = SigninFormSchema.safeParse(credentials);
+        if (!result.success) {
+          return null;
+        }
+        const { email, password } = result.data;
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email },
         });
         if (!user || !user.password) return null;
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
+        const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) return null;
         return user;
       },
