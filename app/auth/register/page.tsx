@@ -6,21 +6,13 @@ import { AuthCard } from "@/components/ui/Card/authCard";
 import { Button } from "@/components/ui/Button/button";
 import { Input } from "@/components/ui/Field/input";
 import { Select } from "@/components/ui/Field/select";
-
-type FormState = {
-  errors?: {
-    name?: string[];
-    email?: string[];
-    password?: string[];
-    role?: string[];
-  };
-};
+import { SignupFormState } from "@/app/lib/definitions";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "customer" });
-  const [errors, setErrors] = useState<FormState["errors"]>({});
+  const [errors, setErrors] = useState<SignupFormState>({errors: {} });
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -52,13 +44,6 @@ export default function RegisterPage() {
     <div className="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#3b82f620_1px,transparent_1px),linear-gradient(to_bottom,#3b82f620_1px,transparent_1px)] bg-[size:64px_64px]">
       <div className="flex items-center justify-center min-h-screen">
         <AuthCard className="w-full max-w-md" title="Register">
-          {/* {state?.errors?.name && <div className="mb-4 p-2 bg-red-200 text-red-800 rounded">{state.errors.name}</div>} */}
-          {/* {error && <div className="mb-4 p-2 bg-red-200 text-red-800 rounded">{error}</div>} */}
-          {errors?.name && errors.name.map((err, idx) => (
-            <div key={idx} className="mb-2 p-2 bg-red-200 text-red-800 rounded">
-              {err}
-            </div>
-          ))}
           <form onSubmit={handleSubmit} className="space-y-6">
             <Input
               id="name"
@@ -68,13 +53,18 @@ export default function RegisterPage() {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
               placeholder="Name" />
+                       {errors?.errors?.name && errors.errors.name.map((err, idx) => (
+            <div key={idx} className="mb-2 p-2 bg-red-200 text-red-800 rounded">
+              {err}
+            </div>
+          ))}
             <Input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
               placeholder="Email" />
-            {errors?.email && errors.email.map((err, idx) => (
+            {errors?.errors?.email && errors.errors.email.map((err, idx) => (
               <div key={idx} className="mb-2 p-2 bg-red-200 text-red-800 rounded">
                 {err}
               </div>
@@ -86,7 +76,7 @@ export default function RegisterPage() {
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
             />
-            {errors?.password && errors.password.map((err, idx) => (
+            {errors?.errors?.password && errors.errors.password.map((err, idx) => (
               <div key={idx} className="mb-2 p-2 bg-red-200 text-red-800 rounded">
                 {err}
               </div>

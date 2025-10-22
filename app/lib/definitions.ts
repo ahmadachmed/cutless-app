@@ -36,11 +36,37 @@ export const SigninFormSchema = z.object({
   password: z.string().min(3, { message: "Password is required." }).trim(),
 });
 
-export type SigninFormState =
+
+export const BarbershopFormSchema = z.object({
+    id: z.string().optional(),
+    name: z
+      .string()
+      .min(2, { message: "Name must be at least 2 characters long." })
+      .max(100, { message: "Name must be at most 100 characters long." })
+      .trim(),
+    address: z
+      .string()
+      .min(5, { message: "Address must be at least 5 characters long." })
+      .max(200, { message: "Address must be at most 200 characters long." })
+      .trim(),
+    phoneNumber: z
+      .string()
+      .min(10, { message: "Phone number must be at least 10 digits long." })
+      .max(15, { message: "Phone number must be at most 15 digits long." })
+      .trim(),
+    subscriptionPlan: z
+      .enum(["basic", "premium", "enterprise"])
+      .default("basic"),
+  });
+
+export type BarbershopFormState =
   | {
       errors?: {
-        email?: string[];
-        password?: string[];
+        id?: string[];
+        name?: string[];
+        address?: string[];
+        phoneNumber?: string[];
+        subscriptionPlan?: string[];
       };
       message?: string;
     }

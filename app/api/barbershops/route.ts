@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { BarbershopFormSchema } from "@/app/lib/definitions";
 
 const prisma = new PrismaClient();
 
@@ -30,16 +31,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, address, phoneNumber, subscriptionPlan } = await req.json();
-
-  if (!name || !address || !phoneNumber || !subscriptionPlan) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-  }
 
   try {
-    if (!session.user.id) {
-      return NextResponse.json({ error: "Owner ID is missing" }, { status: 400 });
+    const body = await req.json();
+    const validation = BarbershopFormSchema.safeParse(body);
+    if (!validation.success) {
+      const formattedErrors = validation.error.flatten().fieldErrors;
+      return NextResponse.json({ errors: formattedErrors }, { status: 400 });
     }
+    const { name, address, phoneNumber, subscriptionPlan } = validation.data;
+
+    const existingBarbershop = await prisma.barbershop.findUnique({ where: { name } });
+    if (existingBarbershop) {
+      return NextResponse.json(
+        { error: "Barbershop name must be unique" },
+        { status: 409 }
+      );
+    }
+
     const barbershop = await prisma.barbershop.create({
       data: {
         name,
@@ -66,16 +75,21 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id, name, address, phoneNumber, subscriptionPlan } = await req.json();
-
-  if (!id || !name || !address || !phoneNumber || !subscriptionPlan) {
-    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  const validation = BarbershopFormSchema.safeParse(await req.json());
+  if (!validation.success) {
+    const formattedErrors = validation.error.flatten().fieldErrors;
+    return NextResponse.json({ errors: formattedErrors }, { status: 400 });
   }
 
-  const barbershop = await prisma.barbershop.findUnique({ where: { id } });
-
-  if (!barbershop || barbershop.ownerId !== session.user.id) {
-    return NextResponse.json({ error: "Not found or unauthorized" }, { status: 404 });
+  const { id, name, address, phoneNumber, subscriptionPlan } = validation.data as any;
+  
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  } else {
+    const barbershop = await prisma.barbershop.findUnique({ where: { id } });
+    if (!barbershop || barbershop.ownerId !== session.user.id) {
+      return NextResponse.json({ error: "Barbershop id is not found" }, { status: 404 });
+    }
   }
 
   try {
@@ -92,9 +106,9 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json(updatedBarbershop);
   } catch (error: any) {
     if (error.code === 'P2002') {
-      return NextResponse.json({ error: "Barbershop name must be unique" }, { status: 409 });
+      return NextResponse.json({ code: error.code, error: "Barbershop name must be unique" }, { status: 409 });
     }
-    return NextResponse.json({ error: "Failed to update barbershop" }, { status: 500 });
+    return NextResponse.json({ code: error.code, error: "Failed to update barbershop" }, { status: 500 });
   }
 }
 
@@ -117,7 +131,15 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Not found or unauthorized" }, { status: 404 });
   }
 
-  await prisma.barbershop.delete({ where: { id } });
-
+  try {
+    await prisma.$transaction(async (prisma) => {
+      // Hapus relasi capsters terlebih dahulu
+      await prisma.capster.deleteMany({ where: { barbershopId: id } });
+      // Hapus barbershop
+      await prisma.barbershop.delete({ where: { id } });
+    });
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to delete barbershop" }, { status: 500 });
+  }
   return NextResponse.json({ message: "Barbershop deleted successfully" });
 }
