@@ -10,14 +10,24 @@ export async function verifySession() {
   return session.user;
 }
 
-export async function getUserProfile() {
-  const user = await verifySession();
-  const profile = await prisma.user.findUnique({
-    where: { email: user.email! },
-    select: { id: true, name: true, email: true, role: true, createdAt: true },
+// All barbershops for an owner
+export async function getOwnerWithBarbershops(userId: string) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      barbershops: true, // all barbershops owned by this user
+    },
   });
-  if (!profile) {
-    throw new Error("User not found");
-  }
-  return profile;
 }
+
+// Capster + their barbershop
+export async function getCapsterWithBarbershop(userId: string) {
+  return prisma.capster.findUnique({
+    where: { userId },
+    include: {
+      barbershop: true,
+    },
+  });
+}
+
+
