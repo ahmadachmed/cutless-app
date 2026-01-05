@@ -29,11 +29,18 @@ export default async function DashboardPage() {
             </div>
         );
     }
+
+    if (profile?.barbershops.length == 1) {
+        redirect("/dashboard/" + profile.barbershops[0].id);
+    }
+
     return (
-        <div className="p-4">
-            <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-            <p>Welcome to your Dashboard, {profile.name}!</p>
+        <div className="">
+
+            {/* <div className="flex flex-col gap-4">
+                <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+                <p>Welcome to your Dashboard, {profile.name}!</p>
+            </div> */}
         </div>
-        
     );
 }

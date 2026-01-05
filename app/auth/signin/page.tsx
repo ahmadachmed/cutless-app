@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button/button";
 import { AuthCard } from "@/components/ui/Card/authCard";
 import { SigninFormSchema } from "@/app/lib/definitions";
+import { CgSpinner } from "react-icons/cg";
 
 type FormState = {
   errors?: {
@@ -21,10 +22,13 @@ export default function SignInPage() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState<FormState["errors"]>({});
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrors({});
+    setError(null);
+    setIsLoading(true);
 
     // Client-side validation
     const result = SigninFormSchema.safeParse(formData);
@@ -34,6 +38,7 @@ export default function SignInPage() {
         email: formatted.email?._errors,
         password: formatted.password?._errors,
       });
+      setIsLoading(false);
       return;
     }
 
@@ -47,8 +52,11 @@ export default function SignInPage() {
     const CREDENTIALS_SIGNIN_ERROR = "CredentialsSignin";
     if (res?.error === CREDENTIALS_SIGNIN_ERROR) {
       setError("Invalid email or password");
+      setIsLoading(false);
     } else if (res?.ok) {
       router.push(callbackUrl);
+    } else {
+      setIsLoading(false);
     }
   }
 
@@ -82,8 +90,8 @@ export default function SignInPage() {
                   className="w-full bg-[#EDEDEA] p-4 rounded-md  focus:outline-none focus:ring-2 focus:ring-transparent error:focus:ring-red-400"
                 />
               </div>
-              <Button type="submit" variant="primary" className="w-full">
-                Sign In
+              <Button type="submit" variant="primary" className="w-full flex justify-center items-center" disabled={isLoading}>
+                {isLoading ? <CgSpinner className="animate-spin text-xl" /> : "Sign In"}
               </Button>
               {error && <div className="mb-4 p-2 bg-red-200 text-red-800 rounded">{error}</div>}
               <div className="text-center">
