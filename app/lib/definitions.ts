@@ -55,8 +55,8 @@ export const BarbershopFormSchema = z.object({
       .max(15, { message: "Phone number must be at most 15 digits long." })
       .trim(),
     subscriptionPlan: z
-      .enum(["basic", "premium", "enterprise"])
-      .default("basic"),
+      .enum(["free", "pro", "enterprise"])
+      .default("free"),
   });
 
 export type BarbershopFormState =

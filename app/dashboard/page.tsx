@@ -2,6 +2,7 @@ import { getOwnerWithBarbershops } from "@/app/lib/dal";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
+import DashboardClient from "./DashboardClient";
 
 
 
@@ -30,17 +31,7 @@ export default async function DashboardPage() {
         );
     }
 
-    if (profile?.barbershops.length == 1) {
-        redirect("/dashboard/" + profile.barbershops[0].id);
-    }
-
     return (
-        <div className="">
-
-            {/* <div className="flex flex-col gap-4">
-                <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-                <p>Welcome to your Dashboard, {profile.name}!</p>
-            </div> */}
-        </div>
+        <DashboardClient barbershops={profile.barbershops} />
     );
 }

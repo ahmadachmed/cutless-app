@@ -14,8 +14,18 @@ export async function verifySession() {
 export async function getOwnerWithBarbershops(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
-    include: {
-      barbershops: true, // all barbershops owned by this user
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+      barbershops: {
+        include: {
+          capsters: true,
+        },
+      },
     },
   });
 }

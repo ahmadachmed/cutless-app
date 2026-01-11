@@ -5,10 +5,12 @@ import { Gi3dHammer, GiAbstract013, GiAbstract103, GiVibratingBall } from "react
 import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 import { CgSpinner } from "react-icons/cg";
+import { useRouter } from "next/navigation";
 
 const Nav = () => {
     const { data: session } = useSession();
     const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
 
     const handleSignOut = () => {
         setIsLoading(true);
@@ -22,7 +24,7 @@ const Nav = () => {
                     <h1 className="text-white text-2xl bg-black rounded-sm"><GiAbstract103 /></h1>
                 </div>
                 <div className="gap-5 flex flex-col text-xl">
-                    <Button variant="transparent" onClick={() => { }}><GiAbstract013 /></Button>
+                    <Button variant="transparent" onClick={() => { router.push("/dashboard") }}><GiAbstract013 /></Button>
                     <Button variant="transparent" onClick={() => { }}><Gi3dHammer /></Button>
                     <Button variant="transparent" onClick={() => { }}><GiVibratingBall /></Button>
                 </div>

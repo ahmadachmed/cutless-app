@@ -204,8 +204,8 @@ export default function BarbershopsPage() {
               onChange={(e) => setEditSubscriptionPlan(e.target.value)}
               className="border p-2 rounded mb-2"
             >
-              <option value="basic">Basic</option>
-              <option value="premium">Premium</option>
+              <option value="free">Free</option>
+              <option value="pro">Pro</option>
               <option value="enterprise">Enterprise</option>
             </select>
             <button
