@@ -1,5 +1,6 @@
 "use client";
 import { ImProfile } from "react-icons/im";
+import { FaCalendarCheck } from "react-icons/fa";
 import { Button } from "../ui/Button/button";
 import { Gi3dHammer, GiAbstract013, GiAbstract103, GiVibratingBall } from "react-icons/gi";
 import { signOut, useSession } from "next-auth/react";
@@ -32,6 +33,9 @@ const Nav = () => {
                     )}
                     {session?.user?.role === "owner" && (
                         <Button variant="transparent" onClick={() => { router.push("/dashboard/book") }} title="Book Appointment"><GiVibratingBall /></Button>
+                    )}
+                    {(session?.user?.role === "owner" || session?.user?.role === "capster") && (
+                        <Button variant="transparent" onClick={() => { router.push("/dashboard/appointments") }} title="Appointments"><FaCalendarCheck /></Button>
                     )}
                     <Button variant="transparent" onClick={() => { }}><GiAbstract013 /></Button>
                 </div>

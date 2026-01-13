@@ -12,7 +12,7 @@ type Barbershop = {
     capsters?: { id: string }[];
 };
 
-export default function DashboardClient({ barbershops }: { barbershops: Barbershop[] }) {
+export default function DashboardClient({ barbershops, appointmentCounts }: { barbershops: Barbershop[], appointmentCounts?: Record<string, { pending: number; confirmed: number }> }) {
     const [selectedShopId, setSelectedShopId] = useState<string>(
         barbershops.length > 0 ? barbershops[0].id : ""
     );
@@ -86,6 +86,18 @@ export default function DashboardClient({ barbershops }: { barbershops: Barbersh
                                 <p className="text-sm font-medium text-blue-600 mb-1 group-hover:text-blue-700">Capsters</p>
                                 <p className="text-2xl font-bold text-blue-900 group-hover:text-blue-950">
                                     {selectedShop.capsters?.length || 0}
+                                </p>
+                            </Link>
+                            <Link href="/dashboard/appointments" className="flex-1 block p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors group">
+                                <p className="text-sm font-medium text-yellow-600 mb-1 group-hover:text-yellow-700">Pending Appts</p>
+                                <p className="text-2xl font-bold text-yellow-900 group-hover:text-yellow-950">
+                                    {appointmentCounts?.[selectedShop.id]?.pending || 0}
+                                </p>
+                            </Link>
+                            <Link href="/dashboard/appointments" className="flex-1 block p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group">
+                                <p className="text-sm font-medium text-green-600 mb-1 group-hover:text-green-700">Confirmed</p>
+                                <p className="text-2xl font-bold text-green-900 group-hover:text-green-950">
+                                    {appointmentCounts?.[selectedShop.id]?.confirmed || 0}
                                 </p>
                             </Link>
                         </div>
