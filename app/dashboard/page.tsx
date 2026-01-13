@@ -20,7 +20,6 @@ export default async function DashboardPage() {
     }
 
     const profile = await getOwnerWithBarbershops(userId);
-    console.log("DashboardPage profile:", profile);
 
     if (!profile) {
         return (
@@ -46,6 +45,6 @@ export default async function DashboardPage() {
     });
 
     return (
-        <DashboardClient barbershops={profile.barbershops} appointmentCounts={appointmentCounts} />
+        <DashboardClient barbershops={profile!.barbershops} appointmentCounts={appointmentCounts} appointments={appointments} />
     );
 }

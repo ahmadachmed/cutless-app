@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 
+import Timeline from "@/components/ui/Dashboard/Timeline";
+
 type Barbershop = {
     id: string;
     name: string;
@@ -12,7 +14,7 @@ type Barbershop = {
     capsters?: { id: string }[];
 };
 
-export default function DashboardClient({ barbershops, appointmentCounts }: { barbershops: Barbershop[], appointmentCounts?: Record<string, { pending: number; confirmed: number }> }) {
+export default function DashboardClient({ barbershops, appointmentCounts, appointments }: { barbershops: Barbershop[], appointmentCounts?: Record<string, { pending: number; confirmed: number }>, appointments: any[] }) {
     const [selectedShopId, setSelectedShopId] = useState<string>(
         barbershops.length > 0 ? barbershops[0].id : ""
     );
@@ -100,6 +102,11 @@ export default function DashboardClient({ barbershops, appointmentCounts }: { ba
                                     {appointmentCounts?.[selectedShop.id]?.confirmed || 0}
                                 </p>
                             </Link>
+                        </div>
+
+                        {/* Timeline */}
+                        <div className="mt-8">
+                            <Timeline appointments={appointments.filter(a => a.barbershopId === selectedShop.id)} />
                         </div>
                     </div>
                 </div>
