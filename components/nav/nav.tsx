@@ -18,19 +18,25 @@ const Nav = () => {
     }
 
     return (
-        <nav className="flex flex-col h-screen justify-between items-center bg-[#101010] rounded-3xl p-4">
+        <nav className="flex flex-col min-h-[calc(100vh-56px)] justify-between items-center bg-[#101010] rounded-3xl p-4">
             <div className="flex flex-col items-center text-xl gap-10">
                 <div className="bg-white/30 rounded-full p-4">
                     <h1 className="text-white text-2xl bg-black rounded-sm"><GiAbstract103 /></h1>
                 </div>
                 <div className="gap-5 flex flex-col text-xl">
-                    <Button variant="transparent" onClick={() => { router.push("/dashboard") }}><GiAbstract013 /></Button>
-                    <Button variant="transparent" onClick={() => { }}><Gi3dHammer /></Button>
-                    <Button variant="transparent" onClick={() => { }}><GiVibratingBall /></Button>
+                    {session?.user?.role === "owner" && (
+                        <Button variant="transparent" onClick={() => { router.push("/dashboard/barbershops") }} title="Dashboard"><GiAbstract013 /></Button>
+                    )}
+                    {session?.user?.role === "owner" && (
+                        <Button variant="transparent" onClick={() => { router.push("/dashboard/services") }} title="Manage Services"><Gi3dHammer /></Button>
+                    )}
+                    {session?.user?.role === "owner" && (
+                        <Button variant="transparent" onClick={() => { router.push("/dashboard/book") }} title="Book Appointment"><GiVibratingBall /></Button>
+                    )}
+                    <Button variant="transparent" onClick={() => { }}><GiAbstract013 /></Button>
                 </div>
             </div>
-            <div className="flex flex-col gap-5 text-xl">
-                <Button variant="transparent" onClick={() => { }}><GiAbstract013 /></Button>
+            <div className="flex flex-col text-xl">
                 <Button variant="transparent" className="text-sm font-extrabold p-2 bg-white/30" onClick={handleSignOut} disabled={isLoading}>
                     {isLoading ? <CgSpinner className="animate-spin text-xl" /> : session?.user?.name ? session.user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() : <ImProfile />}
                 </Button>

@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { BarbershopFormSchema } from "@/app/lib/definitions";
 import { requireRole, requireSession } from "@/app/lib/auth-utils";
+import { getBarbershopsForOwner } from "@/app/lib/dal";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
-
-const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   try {
     requireRole(session, ["owner"]);
-    const barbershops = await prisma.barbershop.findMany({
-      where: { ownerId: session?.user?.id },
-      include: { capsters: true, owner: true },
-    });
+    const barbershops = await getBarbershopsForOwner(session?.user?.id as string);
     return NextResponse.json(barbershops);
   } catch (err) {
     return NextResponse.json(

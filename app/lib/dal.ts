@@ -41,3 +41,12 @@ export async function getCapsterWithBarbershop(userId: string) {
 }
 
 
+// Barbershops for an owner with secure selection
+export async function getBarbershopsForOwner(ownerId: string) {
+  return prisma.barbershop.findMany({
+    where: { ownerId },
+    include: {
+      services: true,
+    },
+  });
+}
