@@ -4,6 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 
 import Timeline from "@/components/ui/Dashboard/Timeline";
+import { Tabs } from "@/components/ui/Tabs/Tabs";
+import { FaCalendarCheck } from "react-icons/fa";
+import { CircularProgress } from "@/components/ui/Progress/CircularProgress";
+
 
 type Barbershop = {
     id: string;
@@ -14,10 +18,14 @@ type Barbershop = {
     capsters?: { id: string }[];
 };
 
-export default function DashboardClient({ barbershops, appointmentCounts, appointments }: { barbershops: Barbershop[], appointmentCounts?: Record<string, { pending: number; confirmed: number }>, appointments: any[] }) {
+export default function DashboardClient({ barbershops, appointmentCounts, appointments }: { barbershops: Barbershop[], appointmentCounts?: Record<string, { pending: number; confirmed: number; cancelled: number }>, appointments: any[] }) {
     const [selectedShopId, setSelectedShopId] = useState<string>(
         barbershops.length > 0 ? barbershops[0].id : ""
     );
+    const pending = appointmentCounts?.[selectedShopId]?.pending || 0;
+    const confirmed = appointmentCounts?.[selectedShopId]?.confirmed || 0;
+    const cancelled = appointmentCounts?.[selectedShopId]?.cancelled || 0;
+    const total = pending + confirmed + cancelled;
 
     const selectedShop = barbershops.find((shop) => shop.id === selectedShopId);
 
@@ -47,67 +55,116 @@ export default function DashboardClient({ barbershops, appointmentCounts, appoin
         <div className="py-4">
 
             {/* Tabs */}
-            <div className="flex space-x-2 mb-6 overflow-x-auto pb-2">
-                {barbershops.map((shop) => (
-                    <button
-                        key={shop.id}
-                        onClick={() => setSelectedShopId(shop.id)}
-                        className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${selectedShopId === shop.id
-                            ? "bg-gray-900 text-white shadow-sm"
-                            : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-100"
-                            }`}
-                    >
-                        {shop.name}
-                    </button>
-                ))}
-            </div>
+            <Tabs
+                tabs={barbershops.map(shop => ({ id: shop.id, label: shop.name }))}
+                activeTab={selectedShopId}
+                onChange={setSelectedShopId}
+                className="mb-6"
+            />
 
             {/* Content */}
             {selectedShop && (
-                <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-                    <div className="flex justify-between items-start mb-4">
-                        <h2 className="text-xl font-semibold text-gray-900">{selectedShop.name}</h2>
-                        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 uppercase tracking-wide">
-                            {selectedShop.subscriptionPlan} Plan
-                        </span>
+                <div className="flex flex-col gap-6">
+                    {/* Top Row: Info and Metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                        {/* Capsters Card */}
+                        <Link href="/dashboard/capsters" className="bg-[#EAEEEB] rounded-lg shadow p-6 border border-gray-100 flex flex-col justify-between hover:border-blue-200 transition-colors group">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-medium text-gray-900">Capsters</h3>
+                                <div className="p-2 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors">
+                                    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div className="mt-4">
+                                <p className="text-3xl font-bold text-gray-900">{selectedShop.capsters?.length || 0}</p>
+                                <p className="text-sm text-gray-500 mt-1">Active staff members</p>
+                            </div>
+                        </Link>
+
+                        {/* Appointments Status Card */}
+                        <Link href={`/dashboard/appointments`} className={`rounded-lg p-6 flex flex-col justify-between h-full ${(appointmentCounts?.[selectedShop.id]?.pending || 0) > 0
+                            ? "bg-[#F0FAA1] border-[#F0FAA1]"
+                            : "bg-[#EAEEEB] border-red-200"
+                            }`}>
+                            <div className="flex gap-4 items-center">
+                                <div className="p-3 bg-white rounded-2xl">
+                                    <FaCalendarCheck />
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-900">Appointment Status</h3>
+                            </div>
+
+                            <div className="mt-6">
+                                <div className="flex items-baseline gap-2 relative">
+                                    <span className="px-3 py-1 bg-white rounded-full text-sm font-semibold flex items-center gap-2 absolute transform translate-x-1/2">
+                                        {(() => {
+                                            const ratio = (total === 0 || pending === 0) ? 1 : (confirmed / total);
+                                            const percentageDisplay = Math.round(ratio * 100);
+
+                                            return (
+                                                <>
+                                                    {percentageDisplay}%
+                                                    <CircularProgress value={percentageDisplay} />
+                                                </>
+                                            );
+                                        })()}
+                                    </span>
+                                    <span className="text-6xl font-normal text-gray-900 tracking-tight">
+                                        {pending}
+                                    </span>
+                                    <span className="text-gray-500 font-medium">
+                                        / {total - pending || 0} Confirmed
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-1.5 mt-6 h-12">
+                                {(() => {
+                                    const percentage = (total === 0 || pending === 0) ? 1 : (confirmed / total);
+
+                                    const filledCount = Math.round(percentage * 8);
+
+                                    return Array.from({ length: 8 }).map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className={`flex-1 rounded-full border-2 ${i < filledCount
+                                                ? "bg-[#1a1a1a] border-[#1a1a1a]"
+                                                : "border-gray-300 border-dashed"
+                                                }`}
+                                        />
+                                    ));
+                                })()}
+                            </div>
+                        </Link>
+
+                        {/* Barbershop Info Card */}
+                        <div className="bg-[#EAEEEB] rounded-lg shadow p-6 border border-gray-100 flex flex-col justify-between">
+                            <div>
+                                <div className="flex justify-between items-start mb-4">
+                                    <h2 className="text-xl font-semibold text-gray-900">{selectedShop.name}</h2>
+                                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 uppercase tracking-wide">
+                                        {selectedShop.subscriptionPlan} Plan
+                                    </span>
+                                </div>
+                                <div className="space-y-3 text-gray-600">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-500">Address</p>
+                                        <p>{selectedShop.address}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-500">Phone</p>
+                                        <p>{selectedShop.phoneNumber}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="space-y-3 text-gray-600">
-                        <div>
-                            <p className="text-sm font-medium text-gray-500">Address</p>
-                            <p>{selectedShop.address}</p>
-                        </div>
-
-                        <div>
-                            <p className="text-sm font-medium text-gray-500">Phone</p>
-                            <p>{selectedShop.phoneNumber}</p>
-                        </div>
-
-                        <div className="pt-4 border-t border-gray-100 flex gap-4">
-                            <Link href="/dashboard/capsters" className="flex-1 block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors group">
-                                <p className="text-sm font-medium text-blue-600 mb-1 group-hover:text-blue-700">Capsters</p>
-                                <p className="text-2xl font-bold text-blue-900 group-hover:text-blue-950">
-                                    {selectedShop.capsters?.length || 0}
-                                </p>
-                            </Link>
-                            <Link href="/dashboard/appointments" className="flex-1 block p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors group">
-                                <p className="text-sm font-medium text-yellow-600 mb-1 group-hover:text-yellow-700">Pending Appts</p>
-                                <p className="text-2xl font-bold text-yellow-900 group-hover:text-yellow-950">
-                                    {appointmentCounts?.[selectedShop.id]?.pending || 0}
-                                </p>
-                            </Link>
-                            <Link href="/dashboard/appointments" className="flex-1 block p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group">
-                                <p className="text-sm font-medium text-green-600 mb-1 group-hover:text-green-700">Confirmed</p>
-                                <p className="text-2xl font-bold text-green-900 group-hover:text-green-950">
-                                    {appointmentCounts?.[selectedShop.id]?.confirmed || 0}
-                                </p>
-                            </Link>
-                        </div>
-
-                        {/* Timeline */}
-                        <div className="mt-8">
-                            <Timeline appointments={appointments.filter(a => a.barbershopId === selectedShop.id)} />
-                        </div>
+                    {/* Timeline Card */}
+                    <div className="bg-[#EAEEEB] rounded-lg shadow p-6 border border-gray-100">
+                        <Timeline appointments={appointments.filter(a => a.barbershopId === selectedShop.id)} />
                     </div>
                 </div>
             )}

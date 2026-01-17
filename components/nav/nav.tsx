@@ -19,7 +19,7 @@ const Nav = () => {
     }
 
     return (
-        <nav className="flex flex-col min-h-[calc(100vh-56px)] justify-between items-center bg-[#101010] rounded-3xl p-4">
+        <nav className="sticky top-5 flex flex-col h-[calc(100vh-40px)] justify-between items-center bg-[#101010] rounded-3xl p-4">
             <div className="flex flex-col items-center text-xl gap-10">
                 <div className="bg-white/30 rounded-full p-4">
                     <h1 className="text-white text-2xl bg-black rounded-sm"><GiAbstract103 /></h1>
