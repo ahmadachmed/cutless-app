@@ -45,7 +45,10 @@ export async function getCapsterWithBarbershop(userId: string) {
 // Barbershops for an owner with secure selection
 export async function getBarbershopsForOwner(ownerId: string) {
   return prisma.barbershop.findMany({
-    where: { ownerId },
+    where: { 
+      ownerId,
+      deletedAt: null // Exclude soft-deleted barbershops
+    },
     include: {
       services: true,
     },
@@ -107,8 +110,12 @@ export async function createBarbershop(data: unknown, ownerId: string) {
 
     const { name, address, phoneNumber, subscriptionPlan, openTime, closeTime, breakStartTime, breakEndTime, daysOpen } = validation.data;
 
-    const existingBarbershop = await prisma.barbershop.findUnique({
-        where: { name },
+    // Check for existing barbershop with same name (excluding soft-deleted ones)
+    const existingBarbershop = await prisma.barbershop.findFirst({
+        where: { 
+            name,
+            deletedAt: null // Only check active barbershops
+        },
     });
 
     if (existingBarbershop) {
@@ -192,9 +199,10 @@ export async function deleteBarbershop(id: string, ownerId: string) {
     }
 
     try {
-        await prisma.$transaction(async (prismaTx) => {
-            await prismaTx.capster.deleteMany({ where: { barbershopId: id } });
-            await prismaTx.barbershop.delete({ where: { id } });
+        // Soft delete: just set deletedAt timestamp
+        await prisma.barbershop.update({
+            where: { id },
+            data: { deletedAt: new Date() }
         });
         return { message: "Barbershop deleted successfully" };
     } catch {

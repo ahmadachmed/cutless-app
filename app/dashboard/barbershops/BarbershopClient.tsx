@@ -29,7 +29,7 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
     const [isLoading, setIsLoading] = useState(false);
     const [editingShop, setEditingShop] = useState<Barbershop | null>(null);
     const [deletingShopId, setDeletingShopId] = useState<string | null>(null);
-    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [errors, setErrors] = useState<{ [key: string]: string | string[] }>({});
 
     // Form State
     const [formData, setFormData] = useState({
@@ -97,8 +97,9 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
+        setErrors({});
         setIsLoading(true);
+
         try {
             const url = "/api/barbershops";
             const method = editingShop ? "PUT" : "POST";
@@ -115,7 +116,10 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
                 if (data.errors) {
                     setErrors(data.errors);
                 }
-                throw new Error(data.error || "Failed to save barbershop");
+                if (data.error) {
+                    setErrors({ general: data.error });
+                }
+                return;
             }
 
             const savedShop = await res.json();
@@ -126,10 +130,10 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
                 setBarbershops(prev => [...prev, savedShop]);
             }
 
-            router.refresh(); // Refresh server data
+            router.refresh();
             closeModal();
         } catch (error: unknown) {
-            alert((error as Error).message);
+            setErrors({ general: (error as Error).message });
         } finally {
             setIsLoading(false);
         }
@@ -145,7 +149,9 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
             });
 
             if (!res.ok) {
-                throw new Error("Failed to delete barbershop");
+                const data = await res.json();
+                alert(data.error || "Failed to delete barbershop");
+                return;
             }
 
             setBarbershops(prev => prev.filter(s => s.id !== deletingShopId));
@@ -272,7 +278,7 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
                                         placeholder="e.g. Cutlass Barbers"
                                         required
                                     />
-                                    {errors?.name && <p className="text-red-500 text-sm mt-1">{errors?.name}</p>}
+                                    {errors?.name && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.name) ? errors.name.join(", ") : errors.name}</p>}
                                 </div>
 
                                 <div>
@@ -285,7 +291,7 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
                                         rows={3}
                                         required
                                     />
-                                    {errors?.address && <p className="text-red-500 text-sm mt-1">{errors?.address}</p>}
+                                    {errors?.address && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.address) ? errors.address.join(", ") : errors.address}</p>}
                                 </div>
 
                                 <div>
@@ -298,7 +304,7 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
                                         placeholder="+1 234 567 890"
                                         required
                                     />
-                                    {errors?.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors?.phoneNumber}</p>}
+                                    {errors?.phoneNumber && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.phoneNumber) ? errors.phoneNumber.join(", ") : errors.phoneNumber}</p>}
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -310,7 +316,7 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
                                             onChange={(e) => setFormData({ ...formData, openTime: e.target.value })}
                                             className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
                                         />
-                                        {errors?.openTime && <p className="text-red-500 text-sm mt-1">{errors?.openTime}</p>}
+                                        {errors?.openTime && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.openTime) ? errors.openTime.join(", ") : errors.openTime}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Close Time</label>
@@ -320,7 +326,7 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
                                             onChange={(e) => setFormData({ ...formData, closeTime: e.target.value })}
                                             className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
                                         />
-                                        {errors?.closeTime && <p className="text-red-500 text-sm mt-1">{errors?.closeTime}</p>}
+                                        {errors?.closeTime && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.closeTime) ? errors.closeTime.join(", ") : errors.closeTime}</p>}
                                     </div>
                                 </div>
 
@@ -333,7 +339,7 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
                                             onChange={(e) => setFormData({ ...formData, breakStartTime: e.target.value })}
                                             className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
                                         />
-                                        {errors?.breakStartTime && <p className="text-red-500 text-sm mt-1">{errors?.breakStartTime}</p>}
+                                        {errors?.breakStartTime && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.breakStartTime) ? errors.breakStartTime.join(", ") : errors.breakStartTime}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Break End</label>
@@ -343,7 +349,7 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
                                             onChange={(e) => setFormData({ ...formData, breakEndTime: e.target.value })}
                                             className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
                                         />
-                                        {errors?.breakEndTime && <p className="text-red-500 text-sm mt-1">{errors?.breakEndTime}</p>}
+                                        {errors?.breakEndTime && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.breakEndTime) ? errors.breakEndTime.join(", ") : errors.breakEndTime}</p>}
                                     </div>
                                 </div>
 
@@ -398,6 +404,12 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
                                         </p>
                                     )}
                                 </div>
+
+                                {errors?.general && (
+                                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                                        {Array.isArray(errors.general) ? errors.general.join(", ") : errors.general}
+                                    </div>
+                                )}
 
                                 <div className="flex gap-3 mt-8">
                                     <button

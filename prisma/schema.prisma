@@ -22,19 +22,20 @@ model User {
 }
 
 model Barbershop {
-  id               String   @id @default(cuid())
-  name             String   @unique
+  id               String    @id @default(cuid())
+  name             String
   address          String
   phoneNumber      String
   ownerId          String
   subscriptionPlan String // free/pro/enterprise
-  openTime         String?  @default("09:00")
-  closeTime        String?  @default("21:00")
+  openTime         String?   @default("09:00")
+  closeTime        String?   @default("21:00")
   breakStartTime   String?
   breakEndTime     String?
-  daysOpen         String?  @default("Mon,Tue,Wed,Thu,Fri,Sat")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  daysOpen         String?   @default("Mon,Tue,Wed,Thu,Fri,Sat")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
 
   owner        User          @relation(fields: [ownerId], references: [id])
   capsters     Capster[]
