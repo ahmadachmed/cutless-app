@@ -41,3 +41,59 @@ export async function getCapsterWithBarbershop(userId: string) {
 }
 
 
+// Barbershops for an owner with secure selection
+export async function getBarbershopsForOwner(ownerId: string) {
+  return prisma.barbershop.findMany({
+    where: { ownerId },
+    include: {
+      services: true,
+    },
+  });
+}
+
+export async function getAppointmentsForUser(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true }
+  });
+
+  if (!user) return [];
+
+  let whereClause = {};
+
+  if (user.role === "owner") {
+    const barbershops = await prisma.barbershop.findMany({
+      where: { ownerId: userId },
+      select: { id: true },
+    });
+    const barbershopIds = barbershops.map((b) => b.id);
+    whereClause = { barbershopId: { in: barbershopIds } };
+  } else if (user.role === "capster") {
+    const capster = await prisma.capster.findUnique({
+      where: { userId: userId }
+    });
+    if (capster) {
+       whereClause = { capsterId: capster.id };
+    } else {
+       return [];
+    }
+  } else {
+    // Customer or other
+    whereClause = { customerId: userId };
+  }
+
+  return prisma.appointment.findMany({
+    where: whereClause,
+    include: {
+      service: true,
+      barbershop: true,
+      capster: {
+        include: {
+          user: { select: { name: true } }
+        }
+      },
+      customer: { select: { name: true, email: true } }
+    },
+    orderBy: { date: 'asc' }
+  });
+}

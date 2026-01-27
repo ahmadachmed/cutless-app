@@ -1,4 +1,4 @@
-import { getOwnerWithBarbershops } from "@/app/lib/dal";
+import { getOwnerWithBarbershops, getAppointmentsForUser } from "@/app/lib/dal";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
@@ -20,7 +20,6 @@ export default async function DashboardPage() {
     }
 
     const profile = await getOwnerWithBarbershops(userId);
-    console.log("DashboardPage profile:", profile);
 
     if (!profile) {
         return (
@@ -31,7 +30,22 @@ export default async function DashboardPage() {
         );
     }
 
+    const appointments = await getAppointmentsForUser(userId);
+    const appointmentCounts: Record<string, { pending: number; confirmed: number; cancelled: number }> = {};
+
+    profile?.barbershops.forEach(shop => {
+        appointmentCounts[shop.id] = { pending: 0, confirmed: 0, cancelled: 0 };
+    });
+
+    appointments.forEach((appt: any) => {
+        if (appointmentCounts[appt.barbershopId]) {
+            if (appt.status === 'PENDING') appointmentCounts[appt.barbershopId].pending++;
+            if (appt.status === 'CONFIRMED') appointmentCounts[appt.barbershopId].confirmed++;
+            if (appt.status === 'CANCELLED') appointmentCounts[appt.barbershopId].cancelled++;
+        }
+    });
+
     return (
-        <DashboardClient barbershops={profile.barbershops} />
+        <DashboardClient barbershops={profile!.barbershops} appointmentCounts={appointmentCounts} appointments={appointments} />
     );
 }
