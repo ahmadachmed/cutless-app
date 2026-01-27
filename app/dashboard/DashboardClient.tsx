@@ -52,7 +52,12 @@ export default function DashboardClient({ barbershops, appointmentCounts, appoin
     }
 
     return (
-        <div className="py-4">
+        <div className="bg-[#F3F3F3] p-5 rounded-3xl">
+            <div className="flex flex-col gap-1.5 mb-6">
+                <h2 className="text-5xl font-light">Dashboard</h2>
+                <p className="text-gray-500">Manage your barbershops and appointments</p>
+            </div>
+
 
             {/* Tabs */}
             <Tabs
