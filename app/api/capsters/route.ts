@@ -3,18 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-// Extend the Session user type to include 'role' and 'id'
-declare module "next-auth" {
-  interface Session {
-    user?: {
-      name?: string | null;
-      email?: string | null;
-      image?: string | null;
-      role?: string;
-      id?: string;
-    };
-  }
-}
 
 // const prisma = new PrismaClient();
 
@@ -26,7 +14,7 @@ export async function GET(req: NextRequest) {
 
   // For owners, show capsters linked to their barbershops
   // Adjust business rule if needed
-  let capsters: any[] = [];
+  let capsters: unknown[] = [];
   if (session.user?.role === "owner") {
     // Get the barbershops owned by this user
     const barbershops = await prisma.barbershop.findMany({

@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { BarbershopFormSchema } from "@/app/lib/definitions";
 
 export async function verifySession() {
   const session = await getServerSession(authOptions);
@@ -96,4 +97,107 @@ export async function getAppointmentsForUser(userId: string) {
     },
     orderBy: { date: 'asc' }
   });
+}
+
+export async function createBarbershop(data: unknown, ownerId: string) {
+    const validation = BarbershopFormSchema.safeParse(data);
+    if (!validation.success) {
+        return { errors: validation.error.flatten().fieldErrors };
+    }
+
+    const { name, address, phoneNumber, subscriptionPlan, openTime, closeTime, breakStartTime, breakEndTime, daysOpen } = validation.data;
+
+    const existingBarbershop = await prisma.barbershop.findUnique({
+        where: { name },
+    });
+
+    if (existingBarbershop) {
+        return { error: "Barbershop name must be unique", code: 409 };
+    }
+
+    try {
+        const barbershop = await prisma.barbershop.create({
+            data: {
+                name,
+                address,
+                phoneNumber,
+                subscriptionPlan,
+                openTime,
+                closeTime,
+                breakStartTime,
+                breakEndTime,
+                daysOpen,
+                ownerId,
+            },
+        });
+        return { barbershop };
+    } catch (error: unknown) {
+        if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code === "P2002") {
+            return { error: "Barbershop name must be unique", code: 409 };
+        }
+        throw new Error("Failed to create barbershop");
+    }
+}
+
+export async function updateBarbershop(data: unknown, ownerId: string) {
+    const validation = BarbershopFormSchema.safeParse(data);
+    if (!validation.success) {
+        return { errors: validation.error.flatten().fieldErrors };
+    }
+
+    const { id, name, address, phoneNumber, subscriptionPlan, openTime, closeTime, breakStartTime, breakEndTime, daysOpen } = validation.data;
+
+    if (!id) {
+        return { error: "Missing id", code: 400 };
+    }
+
+    const barbershop = await prisma.barbershop.findUnique({ where: { id } });
+    if (!barbershop || barbershop.ownerId !== ownerId) {
+        return { error: "Not found or unauthorized", code: 403 };
+    }
+
+    try {
+        const updatedBarbershop = await prisma.barbershop.update({
+            where: { id },
+            data: {
+                name,
+                address,
+                phoneNumber,
+                subscriptionPlan,
+                openTime,
+                closeTime,
+                breakStartTime,
+                breakEndTime,
+                daysOpen,
+                updatedAt: new Date(),
+            },
+        });
+        return { barbershop: updatedBarbershop };
+    } catch (error: unknown) {
+        if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code === "P2002") {
+            return { error: "Barbershop name must be unique", code: 409 };
+        }
+        throw new Error("Failed to update barbershop");
+    }
+}
+
+export async function deleteBarbershop(id: string, ownerId: string) {
+    if (!id) {
+        return { error: "Missing id", code: 400 };
+    }
+
+    const barbershop = await prisma.barbershop.findUnique({ where: { id } });
+    if (!barbershop || barbershop.ownerId !== ownerId) {
+        return { error: "Not found or unauthorized", code: 403 };
+    }
+
+    try {
+        await prisma.$transaction(async (prismaTx) => {
+            await prismaTx.capster.deleteMany({ where: { barbershopId: id } });
+            await prismaTx.barbershop.delete({ where: { id } });
+        });
+        return { message: "Barbershop deleted successfully" };
+    } catch {
+        throw new Error("Failed to delete barbershop");
+    }
 }

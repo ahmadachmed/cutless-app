@@ -18,7 +18,18 @@ type Barbershop = {
     capsters?: { id: string }[];
 };
 
-export default function DashboardClient({ barbershops, appointmentCounts, appointments }: { barbershops: Barbershop[], appointmentCounts?: Record<string, { pending: number; confirmed: number; cancelled: number }>, appointments: any[] }) {
+type Appointment = {
+    id: string;
+    barbershopId: string;
+    date: Date;
+    status: string;
+    service: { name: string; duration: number };
+    customer: { name: string | null };
+    capster: { user: { name: string | null } };
+    [key: string]: unknown;
+};
+
+export default function DashboardClient({ barbershops, appointmentCounts, appointments }: { barbershops: Barbershop[], appointmentCounts?: Record<string, { pending: number; confirmed: number; cancelled: number }>, appointments: Appointment[] }) {
     const [selectedShopId, setSelectedShopId] = useState<string>(
         barbershops.length > 0 ? barbershops[0].id : ""
     );
@@ -39,7 +50,7 @@ export default function DashboardClient({ barbershops, appointmentCounts, appoin
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No Barbershops Found</h3>
                 <p className="text-gray-500 max-w-sm mb-6">
-                    It looks like you haven't set up your barbershop yet. Create your first store to start managing appointments and capsters.
+                    It looks like you haven&apos;t set up your barbershop yet. Create your first store to start managing appointments and capsters.
                 </p>
                 <Link
                     href="/dashboard/barbershops"

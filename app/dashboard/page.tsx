@@ -37,7 +37,7 @@ export default async function DashboardPage() {
         appointmentCounts[shop.id] = { pending: 0, confirmed: 0, cancelled: 0 };
     });
 
-    appointments.forEach((appt: any) => {
+    appointments.forEach((appt) => {
         if (appointmentCounts[appt.barbershopId]) {
             if (appt.status === 'PENDING') appointmentCounts[appt.barbershopId].pending++;
             if (appt.status === 'CONFIRMED') appointmentCounts[appt.barbershopId].confirmed++;

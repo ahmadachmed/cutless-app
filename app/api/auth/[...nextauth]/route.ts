@@ -4,8 +4,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { PrismaClient, User } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { SigninFormSchema } from "@/app/lib/definitions";
-import { Sign } from "crypto";
-import { NextResponse } from "next/server";
+
 
 const prisma = new PrismaClient();
 
@@ -43,16 +42,16 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user }: { token: any; user?: User | any }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.role = (user as User).role;
       }
       return token;
     },
-    async session({ session, token }: { session: any; token: any }) {
+    async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id; // <-- required for backend relations!
+        session.user.id = token.id;
         session.user.role = token.role;
       }
       return session;
