@@ -15,7 +15,9 @@ type FormState = {
   };
 }
 
-export default function SignInPage() {
+import { Suspense } from "react";
+
+function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
@@ -96,7 +98,7 @@ export default function SignInPage() {
               {error && <div className="mb-4 p-2 bg-red-200 text-red-800 rounded">{error}</div>}
               <div className="text-center">
                 <a href="/auth/register" className="text-sm hover:underline">
-                  Don't have an account? Register
+                  Don&apos;t have an account? Register
                 </a>
               </div>
             </form>
@@ -109,5 +111,13 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><CgSpinner className="animate-spin text-4xl text-blue-600" /></div>}>
+      <SignInContent />
+    </Suspense>
   );
 }

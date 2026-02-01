@@ -57,6 +57,19 @@ export const BarbershopFormSchema = z.object({
     subscriptionPlan: z
       .enum(["free", "pro", "enterprise"])
       .default("free"),
+    openTime: z.string().optional(),
+    closeTime: z.string().optional(),
+    breakStartTime: z.string().optional(),
+    breakEndTime: z.string().optional(),
+    daysOpen: z.string().optional(),
+  }).refine((data) => {
+    if (data.breakStartTime && data.breakEndTime) {
+      return data.breakEndTime > data.breakStartTime;
+    }
+    return true;
+  }, {
+    message: "Break end time must be after break start time",
+    path: ["breakEndTime"],
   });
 
 export type BarbershopFormState =
