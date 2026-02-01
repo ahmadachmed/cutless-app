@@ -23,6 +23,9 @@ export async function getOwnerWithBarbershops(userId: string) {
       createdAt: true,
       updatedAt: true,
       barbershops: {
+        where: {
+          deletedAt: null
+        },
         include: {
           capsters: true,
         },
