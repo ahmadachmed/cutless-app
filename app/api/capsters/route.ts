@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import bcrypt from "bcrypt";
 
 
 // const prisma = new PrismaClient();
@@ -43,26 +44,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { userId, barbershopId, specialization } = await req.json();
+  const { name, email, password, barbershopId, specialization } = await req.json();
 
-  if (!userId || !barbershopId) {
+  if (!name || !email || !password || !barbershopId) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-  }
-
-  // Verify user exists
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  } else if (user.role !== "capster") {
-    return NextResponse.json({ error: "User is not registered as a capster" }, { status: 400 });
-  }
-
-  //verify user already a capster in the same barbershop
-  const existingCapster = await prisma.capster.findFirst({
-    where: { userId, barbershopId },
-  });
-  if (existingCapster) {
-    return NextResponse.json({ error: "User is already a capster in this barbershop" }, { status: 400 });
   }
 
   // Verify ownership of the barbershop
@@ -71,11 +56,48 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized or barbershop not found" }, { status: 403 });
   }
 
-  const capster = await prisma.capster.create({
-    data: { userId, barbershopId, specialization },
-  });
+  // Check if user with email already exists
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+  if (existingUser) {
+    return NextResponse.json({ error: "User with this email already exists" }, { status: 409 });
+  }
 
-  return NextResponse.json(capster, { status: 201 });
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await prisma.$transaction(async (tx) => {
+        // 1. Create the User
+        const newUser = await tx.user.create({
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+                role: "capster"
+            }
+        });
+
+        // 2. Create the Capster entry
+        const newCapster = await tx.capster.create({
+            data: {
+                userId: newUser.id,
+                barbershopId,
+                specialization
+            },
+            include: {
+                user: true, 
+                barbershop: true
+            }
+        });
+
+        return newCapster;
+    });
+
+    return NextResponse.json(result, { status: 201 });
+
+  } catch (error) {
+    console.error("Error creating capster:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }
 
 export async function PUT(req: NextRequest) {

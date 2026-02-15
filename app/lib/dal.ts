@@ -212,3 +212,21 @@ export async function deleteBarbershop(id: string, ownerId: string) {
         throw new Error("Failed to delete barbershop");
     }
 }
+
+export async function getCapstersForOwner(ownerId: string) {
+    const barbershops = await prisma.barbershop.findMany({
+        where: { ownerId: ownerId },
+        select: { id: true }
+    });
+    
+    const barbershopIds = barbershops.map(b => b.id);
+    
+    return prisma.capster.findMany({
+        where: { barbershopId: { in: barbershopIds } },
+        include: {
+            user: true, 
+            barbershop: true
+        }
+    });
+}
+
