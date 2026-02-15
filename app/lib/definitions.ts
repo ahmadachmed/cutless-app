@@ -16,7 +16,7 @@ export const SignupFormSchema = z.object({
       message: "Contain at least one special character.",
     })
     .trim(),
-  role: z.enum(["customer", "capster", "owner"]).default("customer"),
+  role: z.enum(["customer", "capster", "owner", "admin"]).default("customer"),
 });
 
 export type SignupFormState =

@@ -10,7 +10,7 @@ import DeleteConfirmationModal from "@/components/ui/Modal/DeleteConfirmationMod
 type Capster = {
     id: string;
     specialization: string | null;
-    user: { id: string; name: string | null; email: string };
+    user: { id: string; name: string | null; email: string; role: string };
     barbershop: { id: string; name: string };
 };
 
@@ -30,6 +30,8 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
     const [password, setPassword] = useState("");
     const [barbershopId, setBarbershopId] = useState("");
     const [specialization, setSpecialization] = useState("");
+    const [role, setRole] = useState("capster");
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     // Modal State
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -45,45 +47,65 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
 
 
     const openAddModal = () => {
+        setEditingId(null);
         setName("");
         setEmail("");
         setPassword("");
         setBarbershopId("");
         setSpecialization("");
+        setRole("capster");
         setIsAddModalOpen(true);
     };
 
-    async function handleAdd(e: React.FormEvent) {
+    const openEditModal = (capster: Capster) => {
+        setEditingId(capster.id);
+        setName(capster.user.name || "");
+        setEmail(capster.user.email);
+        setPassword(""); // Password usually left blank on edit unless changing
+        setBarbershopId(capster.barbershop.id);
+        setSpecialization(capster.specialization || "");
+        setRole(capster.user.role || "capster");
+        setIsAddModalOpen(true);
+    };
+
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        if (!name || !email || !password || !barbershopId) {
-            alert("Name, Email, Password, and Barbershop ID are required");
+
+        // For Add: require password. For Edit: password is optional (only if changing)
+        if (!name || !email || (!editingId && !password) || !barbershopId) {
+            alert("Name, Email, Password (for new users), and Barbershop ID are required");
             return;
         }
+
         setLoading(true);
         try {
-            const res = await fetch("/api/capsters", {
-                method: "POST",
+            const url = editingId ? "/api/capsters" : "/api/capsters";
+            const method = editingId ? "PUT" : "POST";
+            const body = editingId
+                ? { id: editingId, name, email, role, specialization } // Add password here if we allow updating it
+                : { name, email, password, barbershopId, specialization, role };
+
+            const res = await fetch(url, {
+                method: method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, email, password, barbershopId, specialization }),
+                body: JSON.stringify(body),
                 credentials: "include",
             });
+
             if (res.ok) {
-                const newCapster = await res.json();
-                // Optimistically update or re-fetch
-                // For simplicity and consistency, let's re-fetch or append if the response is the full object
-                // The API returns the new capster with inclusions.
-                // Actually, previous implementation re-fetched the whole list.
+                // Refresh list
                 await fetch("/api/capsters", { credentials: "include" })
                     .then((res) => res.json())
                     .then(setCapsters);
                 setIsAddModalOpen(false);
+                setEditingId(null);
             }
             else {
                 const data = await res.json();
-                alert(data.error || "Failed to add capster");
+                alert(data.error || "Failed to save capster");
             }
         } catch {
-            alert("Error adding capster");
+            alert("Error saving capster");
         }
         setLoading(false);
     }
@@ -146,6 +168,7 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
                                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"><p className="flex items-center gap-2"><FaUserTie className="text-gray-400 text-xs" />Name</p></th>
                                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"><p className="flex items-center gap-2"><FaEnvelope className="text-gray-400 text-xs" />Email</p></th>
                                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"><p className="flex items-center gap-2"><FaStore className="text-gray-400 text-xs" />Barbershop</p></th>
+                                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"><p className="flex items-center gap-2"><FaUserTie className="text-gray-400 text-xs" />Role</p></th>
                                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"><p className="flex items-center gap-2"><FaCut className="text-gray-400 text-xs" />Specialization</p></th>
                                     <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                                 </tr>
@@ -169,6 +192,14 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
+                                                ${c.user?.role === 'admin' ? 'bg-red-100 text-red-800' :
+                                                    c.user?.role === 'owner' ? 'bg-blue-100 text-blue-800' :
+                                                        'bg-green-100 text-green-800'}`}>
+                                                {c.user?.role}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
                                             {c.specialization ? (
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-50 text-purple-600 text-xs font-medium border border-purple-100">
                                                     {c.specialization}
@@ -178,6 +209,13 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
+                                            <button
+                                                onClick={() => openEditModal(c)}
+                                                className="text-gray-400 hover:text-blue-600 transition-colors p-2"
+                                                title="Edit Member"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                            </button>
                                             <button
                                                 onClick={() => handleDeleteClick(c.id)}
                                                 className="text-gray-400 hover:text-red-600 transition-colors p-2"
@@ -198,9 +236,9 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
             <Modal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
-                title="Add Team Member"
+                title={editingId ? "Edit Team Member" : "Add Team Member"}
             >
-                <form onSubmit={handleAdd} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                         <input
@@ -225,15 +263,34 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Password {editingId && <span className="text-gray-400 font-normal">(Leave blank to keep current)</span>}</label>
                         <input
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
                             placeholder="••••••••"
-                            required
+                            required={!editingId}
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                        <div className="relative">
+                            <select
+                                value={role}
+                                onChange={(e) => setRole(e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all appearance-none"
+                                required
+                            >
+                                <option value="capster">Capster</option>
+                                <option value="admin">Admin</option>
+                                <option value="owner">Owner</option>
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
                     </div>
 
                     <div>
@@ -281,7 +338,7 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
                             disabled={loading}
                             className="flex-1 py-3 px-4 rounded-xl bg-black text-white font-medium hover:bg-gray-800 transition-all shadow-lg shadow-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {loading ? "Adding..." : "Add Member"}
+                            {loading ? "Saving..." : (editingId ? "Save Changes" : "Add Member")}
                         </button>
                     </div>
                 </form>

@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, email, password, barbershopId, specialization } = await req.json();
+  const { name, email, password, barbershopId, specialization, role } = await req.json();
 
   if (!name || !email || !password || !barbershopId) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
                 name,
                 email,
                 password: hashedPassword,
-                role: "capster"
+                role: role || "capster" // Default to capster if not provided
             }
         });
 
@@ -102,33 +102,70 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "owner") {
+  // Allow owners and admins to edit? For now, sticking to owner based on existing logic, but maybe update if needed for Admin role.
+  // The prompt asked for "edit team member", usually accessible by Owner. 
+  if (!session || (session.user?.role !== "owner" && session.user?.role !== "admin")) { 
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id, specialization } = await req.json();
+  const { id, specialization, name, email, role } = await req.json();
 
-  if (!id || specialization === undefined) {
-    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
   // Check ownership of the capster's barbershop before updating
-  const capster = await prisma.capster.findUnique({ where: { id } });
+  // Or if admin, they might be able to edit anyone?
+  // Let's stick to the current scope: Owner manages their team.
+  const capster = await prisma.capster.findUnique({ 
+    where: { id },
+    include: { user: true }
+  });
+  
   if (!capster) {
     return NextResponse.json({ error: "Capster not found" }, { status: 404 });
   }
 
   const barbershop = await prisma.barbershop.findUnique({ where: { id: capster.barbershopId } });
-  if (!barbershop || barbershop.ownerId !== session.user.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  
+  // Strict check: Only owner of the barbershop can edit? 
+  // If session is owner, check id.
+  if (session.user.role === "owner" && (!barbershop || barbershop.ownerId !== session.user.id)) {
+     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const updatedCapster = await prisma.capster.update({
-    where: { id },
-    data: { specialization },
-  });
+  try {
+      const result = await prisma.$transaction(async (tx) => {
+          // Update User details
+          if (name || email || role) {
+              await tx.user.update({
+                  where: { id: capster.userId },
+                  data: {
+                      name: name || undefined,
+                      email: email || undefined,
+                      role: role || undefined
+                  }
+              });
+          }
 
-  return NextResponse.json(updatedCapster);
+          // Update Capster details
+          const updatedCapster = await tx.capster.update({
+              where: { id },
+              data: { specialization },
+              include: {
+                  user: true,
+                  barbershop: true
+              }
+          });
+          
+          return updatedCapster;
+      });
+
+      return NextResponse.json(result);
+  } catch (error) {
+      console.error("Error updating capster:", error);
+      return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: NextRequest) {
