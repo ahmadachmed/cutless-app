@@ -11,9 +11,9 @@ export async function verifySession() {
   return session.user;
 }
 
-// All barbershops for an owner
+// All barbershops for an owner (or single for admin/capster)
 export async function getOwnerWithBarbershops(userId: string) {
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
@@ -22,16 +22,41 @@ export async function getOwnerWithBarbershops(userId: string) {
       role: true,
       createdAt: true,
       updatedAt: true,
-      barbershops: {
-        where: {
-          deletedAt: null
-        },
-        include: {
-          capsters: true,
-        },
-      },
-    },
+    }
   });
+
+  if (!user) return null;
+
+  let barbershops: any[] = [];
+
+  if (user.role === "owner") {
+      barbershops = await prisma.barbershop.findMany({
+          where: { ownerId: userId, deletedAt: null },
+          include: { capsters: true }
+      });
+  }
+
+  // Also check for secondary ownership/linkage via Capster for all roles including owner
+  if (user.role === "owner" || user.role === "admin" || user.role === "capster" || user.role === "co-owner") {
+      // Find the barbershop this user belongs to
+      const capsterEntry = await prisma.capster.findUnique({
+          where: { userId },
+          include: { 
+              barbershop: {
+                  include: { capsters: true }
+              } 
+          }
+      });
+      
+      if (capsterEntry?.barbershop) {
+           // Add if not already present
+          if (!barbershops.find(b => b.id === capsterEntry.barbershopId)) {
+              barbershops.push(capsterEntry.barbershop);
+          }
+      }
+  }
+
+  return { ...user, barbershops };
 }
 
 // Capster + their barbershop
@@ -46,17 +71,19 @@ export async function getCapsterWithBarbershop(userId: string) {
 
 
 // Barbershops for an owner with secure selection
-export async function getBarbershopsForOwner(ownerId: string) {
-  return prisma.barbershop.findMany({
-    where: { 
-      ownerId,
-      deletedAt: null // Exclude soft-deleted barbershops
-    },
-    include: {
-      services: true,
-    },
-  });
-}
+// Barbershops for an owner with secure selection
+// DEPRECATED: Use getBarbershopsForUser instead
+// export async function getBarbershopsForOwner(ownerId: string) {
+//   return prisma.barbershop.findMany({
+//     where: { 
+//       ownerId,
+//       deletedAt: null // Exclude soft-deleted barbershops
+//     },
+//     include: {
+//       services: true,
+//     },
+//   });
+// }
 
 export async function getAppointmentsForUser(userId: string) {
   const user = await prisma.user.findUnique({
@@ -213,14 +240,75 @@ export async function deleteBarbershop(id: string, ownerId: string) {
     }
 }
 
-export async function getCapstersForOwner(ownerId: string) {
-    const barbershops = await prisma.barbershop.findMany({
-        where: { ownerId: ownerId },
-        select: { id: true }
+
+// Barbershops for a user (Owner: all owned + linked, Admin/Capster: linked shop)
+export async function getBarbershopsForUser(userId: string) {
+  const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+  });
+
+  if (!user) return [];
+
+  let barbershops: any[] = [];
+
+  // Primary ownership (for owners)
+  if (user.role === "owner") {
+      barbershops = await prisma.barbershop.findMany({
+          where: { ownerId: userId, deletedAt: null },
+          include: { services: true },
+      });
+  }
+
+  // Linked ownership (for owners, admins, capsters)
+  // Owners can be "secondary owners" in other shops
+  if (user.role === "owner" || user.role === "admin" || user.role === "capster" || user.role === "co-owner") {
+      const capster = await prisma.capster.findUnique({
+          where: { userId },
+          include: { barbershop: { include: { services: true } } }
+      });
+      
+      if (capster?.barbershop) {
+          // Add if not already present (for owners who might be linked to their own shop or another)
+          if (!barbershops.find(b => b.id === capster.barbershopId)) {
+              barbershops.push(capster.barbershop);
+          }
+      }
+  }
+
+  return barbershops;
+}
+
+// Capsters for a user (Owner: all in owned/linked shops, Admin: all in same shop)
+export async function getCapstersForUser(userId: string) {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true }
     });
+  
+    if (!user) return [];
+  
+    let barbershopIds: string[] = [];
+  
+    if (user.role === "owner") {
+        const shops = await prisma.barbershop.findMany({
+            where: { ownerId: userId, deletedAt: null },
+            select: { id: true }
+        });
+        barbershopIds = shops.map(s => s.id);
+    }
     
-    const barbershopIds = barbershops.map(b => b.id);
-    
+  // Also check for secondary ownership/linkage via Capster for all roles including owner
+  if (user.role === "owner" || user.role === "admin" || user.role === "capster" || user.role === "co-owner") {
+        const capster = await prisma.capster.findUnique({
+            where: { userId },
+            select: { barbershopId: true }
+        });
+        if (capster?.barbershopId && !barbershopIds.includes(capster.barbershopId)) {
+            barbershopIds.push(capster.barbershopId);
+        }
+    }
+  
     return prisma.capster.findMany({
         where: { barbershopId: { in: barbershopIds } },
         include: {
@@ -228,5 +316,14 @@ export async function getCapstersForOwner(ownerId: string) {
             barbershop: true
         }
     });
+}
+
+// Keeping original for backward compatibility if needed, but redirects to new logic if specific ownerId concept is loose
+export async function getCapstersForOwner(ownerId: string) {
+    return getCapstersForUser(ownerId);
+}
+
+export async function getBarbershopsForOwner(ownerId: string) {
+    return getBarbershopsForUser(ownerId);
 }
 

@@ -195,7 +195,8 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
                                                 ${c.user?.role === 'admin' ? 'bg-red-100 text-red-800' :
                                                     c.user?.role === 'owner' ? 'bg-blue-100 text-blue-800' :
-                                                        'bg-green-100 text-green-800'}`}>
+                                                        c.user?.role === 'co-owner' ? 'bg-orange-100 text-orange-800' :
+                                                            'bg-green-100 text-green-800'}`}>
                                                 {c.user?.role}
                                             </span>
                                         </td>
@@ -285,7 +286,7 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
                             >
                                 <option value="capster">Capster</option>
                                 <option value="admin">Admin</option>
-                                <option value="owner">Owner</option>
+                                <option value="co-owner">Co-Owner</option>
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>

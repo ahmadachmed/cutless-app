@@ -45,7 +45,7 @@ const Nav = () => {
             <div className="mb-8">
                 <p className="px-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Menu</p>
                 <div className="space-y-1">
-                    {session?.user?.role === "owner" && (
+                    {(session?.user?.role === "owner" || session?.user?.role === "admin" || session?.user?.role === "co-owner") && (
                         <NavItem
                             href="/dashboard"
                             label="Dashboard"
@@ -54,7 +54,7 @@ const Nav = () => {
                         />
                     )}
 
-                    {(session?.user?.role === "owner" || session?.user?.role === "capster") && (
+                    {(session?.user?.role === "owner" || session?.user?.role === "capster" || session?.user?.role === "co-owner") && (
                         <NavItem
                             href="/dashboard/barbershops"
                             label="Barbershop"
@@ -63,7 +63,7 @@ const Nav = () => {
                         />
                     )}
 
-                    {(session?.user?.role === "owner" || session?.user?.role === "capster") && (
+                    {(session?.user?.role === "owner" || session?.user?.role === "capster" || session?.user?.role === "admin" || session?.user?.role === "co-owner") && (
                         <NavItem
                             href="/dashboard/capsters"
                             label="Teams"
@@ -72,7 +72,7 @@ const Nav = () => {
                         />
                     )}
 
-                    {(session?.user?.role === "owner" || session?.user?.role === "capster") && (
+                    {(session?.user?.role === "owner" || session?.user?.role === "capster" || session?.user?.role === "admin" || session?.user?.role === "co-owner") && (
                         <NavItem
                             href="/dashboard/appointments"
                             label="Calendar"
@@ -81,7 +81,7 @@ const Nav = () => {
                         />
                     )}
 
-                    {session?.user?.role === "owner" && (
+                    {(session?.user?.role === "owner" || session?.user?.role === "co-owner") && (
                         <NavItem
                             href="/dashboard/services"
                             label="Services"
@@ -90,7 +90,7 @@ const Nav = () => {
                         />
                     )}
 
-                    {session?.user?.role === "owner" && (
+                    {(session?.user?.role === "owner" || session?.user?.role === "co-owner") && (
                         <NavItem
                             href="/dashboard/book"
                             label="Book"

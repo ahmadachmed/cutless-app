@@ -13,25 +13,43 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // For owners, show capsters linked to their barbershops
-  // Adjust business rule if needed
+  // For owners, show capsters linked to their barbershops (primary) OR linked via Capster (secondary)
+  // For admins/capsters, show capsters linked to *their* barbershop
   let capsters: unknown[] = [];
+  
+  const barbershopIds = new Set<string>();
+
   if (session.user?.role === "owner") {
-    // Get the barbershops owned by this user
-    const barbershops = await prisma.barbershop.findMany({
+    // 1. Get barbershops owned by this user
+    const ownedBarbershops = await prisma.barbershop.findMany({
       where: { ownerId: session.user.id },
       select: { id: true },
     });
-    const barbershopIds = barbershops.map((b) => b.id);
-    capsters = await prisma.capster.findMany({
-      where: { barbershopId: { in: barbershopIds } },
-      include: {
-        user: true,
-        barbershop: true,
-      },
-    });
+    ownedBarbershops.forEach(b => barbershopIds.add(b.id));
+  }
+  
+
+  // 2. Get barbershop linked via Capster (for everyone including Owner who might be secondary)
+  if (session.user?.role === "owner" || session.user?.role === "admin" || session.user?.role === "capster" || session.user?.role === "co-owner") {
+     const linkedCapster = await prisma.capster.findUnique({
+         where: { userId: session.user.id },
+         select: { barbershopId: true }
+     });
+
+     if (linkedCapster) {
+         barbershopIds.add(linkedCapster.barbershopId);
+     }
+  }
+
+  if (barbershopIds.size > 0) {
+      capsters = await prisma.capster.findMany({
+          where: { barbershopId: { in: Array.from(barbershopIds) } },
+          include: {
+              user: true,
+              barbershop: true,
+          },
+      });
   } else {
-    // For other roles, optionally return empty or all capsters if applicable
     capsters = [];
   }
 
@@ -40,7 +58,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role !== "owner") {
+  if (!session || (session.user?.role !== "owner" && session.user?.role !== "admin" && session.user?.role !== "co-owner")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -50,10 +68,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  // Verify ownership of the barbershop
-  const barbershop = await prisma.barbershop.findUnique({ where: { id: barbershopId } });
-  if (!barbershop || barbershop.ownerId !== session.user.id) {
-    return NextResponse.json({ error: "Unauthorized or barbershop not found" }, { status: 403 });
+  // Verify ownership or admin association
+  if (session.user.role === "owner") {
+      const barbershop = await prisma.barbershop.findUnique({ where: { id: barbershopId } });
+      if (!barbershop || barbershop.ownerId !== session.user.id) {
+        return NextResponse.json({ error: "Unauthorized or barbershop not found" }, { status: 403 });
+      }
+  } else if (session.user.role === "admin" || session.user.role === "co-owner") {
+      const adminCapster = await prisma.capster.findUnique({ where: { userId: session.user.id } });
+      if (!adminCapster || adminCapster.barbershopId !== barbershopId) {
+          return NextResponse.json({ error: "Unauthorized: You can only add members to your assigned barbershop" }, { status: 403 });
+      }
   }
 
   // Check if user with email already exists
@@ -104,7 +129,7 @@ export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions);
   // Allow owners and admins to edit? For now, sticking to owner based on existing logic, but maybe update if needed for Admin role.
   // The prompt asked for "edit team member", usually accessible by Owner. 
-  if (!session || (session.user?.role !== "owner" && session.user?.role !== "admin")) { 
+  if (!session || (session.user?.role !== "owner" && session.user?.role !== "admin" && session.user?.role !== "co-owner")) { 
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
