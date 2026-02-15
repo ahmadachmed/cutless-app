@@ -7,7 +7,7 @@ import { authOptions } from "../auth/[...nextauth]/route";
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   try {
-    requireRole(session, ["owner"]);
+    requireRole(session, ["owner", "co-owner"]);
     const barbershops = await getBarbershopsForOwner(session?.user?.id as string);
     return NextResponse.json(barbershops);
   } catch (err) {

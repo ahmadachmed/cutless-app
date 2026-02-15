@@ -35,7 +35,7 @@ export default function ServicesPage() {
             alert("Unauthorized");
             router.push("/dashboard");
         }
-        if (status === "authenticated" && session?.user?.role === "owner") {
+        if (status === "authenticated" && session?.user?.role === "owner" || session?.user?.role === "co-owner") {
             fetchBarbershops();
         }
     }, [status, session, router]);

@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user || session.user.role !== "owner") {
+  if (!session || !session.user || (session.user.role !== "owner" && session.user.role !== "co-owner")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -40,7 +40,23 @@ export async function POST(req: NextRequest) {
       where: { id: barbershopId },
     });
 
-    if (!barbershop || barbershop.ownerId !== session.user.id) {
+    if (!barbershop) {
+        return NextResponse.json({ error: "Barbershop not found" }, { status: 404 });
+    }
+
+    let isAuthorized = false;
+    if (barbershop.ownerId === session.user.id) {
+        isAuthorized = true;
+    } else if (session.user.role === "co-owner") {
+        const capster = await prisma.capster.findUnique({
+            where: { userId: session.user.id }
+        });
+        if (capster && capster.barbershopId === barbershopId) {
+            isAuthorized = true;
+        }
+    }
+
+    if (!isAuthorized) {
       return NextResponse.json({ error: "Unauthorized access to this barbershop" }, { status: 403 });
     }
 
