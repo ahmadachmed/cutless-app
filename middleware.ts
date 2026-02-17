@@ -2,7 +2,8 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
 const roleRequired: Record<string, string[]> = {
-  "/dashboard": ["owner"],
+  "/dashboard/barbershops": ["owner", "co-owner"],
+  "/dashboard": ["owner", "admin", "capster", "co-owner"],
 };
 
 export default withAuth(

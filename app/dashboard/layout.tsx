@@ -2,7 +2,6 @@
 "use client";
 import Nav from "@/components/nav/nav";
 import Header from "@/components/ui/Header/header";
-import { profile } from "console";
 import { SessionProvider } from "next-auth/react";
 
 export default function WithSessionLayout({ children }: { children: React.ReactNode }) {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FaPlus, FaMapMarkerAlt, FaPhone, FaEdit, FaTrash, FaStore, FaClock, FaCalendar } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import DeleteConfirmationModal from "@/components/ui/Modal/DeleteConfirmationModal";
+import Modal from "@/components/ui/Modal/Modal";
 
 type Barbershop = {
     id: string;
@@ -247,191 +248,169 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
             )}
 
             {/* Edit/Add Modal */}
-            <AnimatePresence>
-                {isModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={closeModal}
-                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            <Modal isOpen={isModalOpen} onClose={closeModal} title={editingShop ? "Edit Barbershop" : "Add Barbershop"}>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
+                            placeholder="e.g. Cutlass Barbers"
+                            required
                         />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl overflow-hidden"
-                        >
-                            <h2 className="text-2xl font-semibold mb-6 text-gray-900">
-                                {editingShop ? "Edit Barbershop" : "New Barbershop"}
-                            </h2>
-
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                                    <input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
-                                        placeholder="e.g. Cutlass Barbers"
-                                        required
-                                    />
-                                    {errors?.name && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.name) ? errors.name.join(", ") : errors.name}</p>}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                                    <textarea
-                                        value={formData.address}
-                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all resize-none"
-                                        placeholder="Full address"
-                                        rows={3}
-                                        required
-                                    />
-                                    {errors?.address && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.address) ? errors.address.join(", ") : errors.address}</p>}
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                    <input
-                                        type="tel"
-                                        value={formData.phoneNumber}
-                                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
-                                        placeholder="+1 234 567 890"
-                                        required
-                                    />
-                                    {errors?.phoneNumber && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.phoneNumber) ? errors.phoneNumber.join(", ") : errors.phoneNumber}</p>}
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Open Time</label>
-                                        <input
-                                            type="time"
-                                            value={formData.openTime}
-                                            onChange={(e) => setFormData({ ...formData, openTime: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
-                                        />
-                                        {errors?.openTime && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.openTime) ? errors.openTime.join(", ") : errors.openTime}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Close Time</label>
-                                        <input
-                                            type="time"
-                                            value={formData.closeTime}
-                                            onChange={(e) => setFormData({ ...formData, closeTime: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
-                                        />
-                                        {errors?.closeTime && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.closeTime) ? errors.closeTime.join(", ") : errors.closeTime}</p>}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Break Start</label>
-                                        <input
-                                            type="time"
-                                            value={formData.breakStartTime}
-                                            onChange={(e) => setFormData({ ...formData, breakStartTime: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
-                                        />
-                                        {errors?.breakStartTime && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.breakStartTime) ? errors.breakStartTime.join(", ") : errors.breakStartTime}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Break End</label>
-                                        <input
-                                            type="time"
-                                            value={formData.breakEndTime}
-                                            onChange={(e) => setFormData({ ...formData, breakEndTime: e.target.value })}
-                                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
-                                        />
-                                        {errors?.breakEndTime && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.breakEndTime) ? errors.breakEndTime.join(", ") : errors.breakEndTime}</p>}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Days Open</label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-                                            <button
-                                                key={day}
-                                                type="button"
-                                                onClick={() => {
-                                                    const currentDays = formData.daysOpen ? formData.daysOpen.split(",") : [];
-                                                    const newDays = currentDays.includes(day)
-                                                        ? currentDays.filter(d => d !== day)
-                                                        : [...currentDays, day];
-                                                    // Sort days to keep them in order
-                                                    const sorter = { "Mon": 1, "Tue": 2, "Wed": 3, "Thu": 4, "Fri": 5, "Sat": 6, "Sun": 7 };
-                                                    newDays.sort((a, b) => (sorter[a as keyof typeof sorter] || 0) - (sorter[b as keyof typeof sorter] || 0));
-                                                    setFormData({ ...formData, daysOpen: newDays.join(",") });
-                                                }}
-                                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${formData.daysOpen?.includes(day)
-                                                    ? "bg-black text-white shadow-md"
-                                                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                                                    }`}
-                                            >
-                                                {day}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Subscription Plan</label>
-                                    <div className="relative">
-                                        <select
-                                            value={formData.subscriptionPlan}
-                                            onChange={(e) => setFormData({ ...formData, subscriptionPlan: e.target.value })}
-                                            disabled={!!editingShop && (editingShop.subscriptionPlan === 'pro' || editingShop.subscriptionPlan === 'enterprise')}
-                                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <option value="free">Free</option>
-                                            <option value="pro">Pro</option>
-                                            <option value="enterprise">Enterprise</option>
-                                        </select>
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                        </div>
-                                    </div>
-                                    {editingShop && (editingShop.subscriptionPlan === 'pro' || editingShop.subscriptionPlan === 'enterprise') && (
-                                        <p className="text-xs text-gray-500 mt-2">
-                                            Subscription plans can only be upgraded or downgraded by contacting support.
-                                        </p>
-                                    )}
-                                </div>
-
-                                {errors?.general && (
-                                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
-                                        {Array.isArray(errors.general) ? errors.general.join(", ") : errors.general}
-                                    </div>
-                                )}
-
-                                <div className="flex gap-3 mt-8">
-                                    <button
-                                        type="button"
-                                        onClick={closeModal}
-                                        className="flex-1 py-3 px-4 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={isLoading}
-                                        className="flex-1 py-3 px-4 rounded-xl bg-black text-white font-medium hover:bg-gray-800 transition-all shadow-lg shadow-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        {isLoading ? "Saving..." : "Save Changes"}
-                                    </button>
-                                </div>
-                            </form>
-                        </motion.div>
+                        {errors?.name && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.name) ? errors.name.join(", ") : errors.name}</p>}
                     </div>
-                )}
-            </AnimatePresence>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <textarea
+                            value={formData.address}
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all resize-none"
+                            placeholder="Full address"
+                            rows={3}
+                            required
+                        />
+                        {errors?.address && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.address) ? errors.address.join(", ") : errors.address}</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <input
+                            type="tel"
+                            value={formData.phoneNumber}
+                            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
+                            placeholder="+1 234 567 890"
+                            required
+                        />
+                        {errors?.phoneNumber && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.phoneNumber) ? errors.phoneNumber.join(", ") : errors.phoneNumber}</p>}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Open Time</label>
+                            <input
+                                type="time"
+                                value={formData.openTime}
+                                onChange={(e) => setFormData({ ...formData, openTime: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
+                            />
+                            {errors?.openTime && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.openTime) ? errors.openTime.join(", ") : errors.openTime}</p>}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Close Time</label>
+                            <input
+                                type="time"
+                                value={formData.closeTime}
+                                onChange={(e) => setFormData({ ...formData, closeTime: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
+                            />
+                            {errors?.closeTime && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.closeTime) ? errors.closeTime.join(", ") : errors.closeTime}</p>}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Break Start</label>
+                            <input
+                                type="time"
+                                value={formData.breakStartTime}
+                                onChange={(e) => setFormData({ ...formData, breakStartTime: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
+                            />
+                            {errors?.breakStartTime && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.breakStartTime) ? errors.breakStartTime.join(", ") : errors.breakStartTime}</p>}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Break End</label>
+                            <input
+                                type="time"
+                                value={formData.breakEndTime}
+                                onChange={(e) => setFormData({ ...formData, breakEndTime: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all"
+                            />
+                            {errors?.breakEndTime && <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.breakEndTime) ? errors.breakEndTime.join(", ") : errors.breakEndTime}</p>}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Days Open</label>
+                        <div className="flex flex-wrap gap-2">
+                            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+                                <button
+                                    key={day}
+                                    type="button"
+                                    onClick={() => {
+                                        const currentDays = formData.daysOpen ? formData.daysOpen.split(",") : [];
+                                        const newDays = currentDays.includes(day)
+                                            ? currentDays.filter(d => d !== day)
+                                            : [...currentDays, day];
+                                        // Sort days to keep them in order
+                                        const sorter = { "Mon": 1, "Tue": 2, "Wed": 3, "Thu": 4, "Fri": 5, "Sat": 6, "Sun": 7 };
+                                        newDays.sort((a, b) => (sorter[a as keyof typeof sorter] || 0) - (sorter[b as keyof typeof sorter] || 0));
+                                        setFormData({ ...formData, daysOpen: newDays.join(",") });
+                                    }}
+                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${formData.daysOpen?.includes(day)
+                                        ? "bg-black text-white shadow-md"
+                                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                        }`}
+                                >
+                                    {day}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Subscription Plan</label>
+                        <div className="relative">
+                            <select
+                                value={formData.subscriptionPlan}
+                                onChange={(e) => setFormData({ ...formData, subscriptionPlan: e.target.value })}
+                                disabled={!!editingShop && (editingShop.subscriptionPlan === 'pro' || editingShop.subscriptionPlan === 'enterprise')}
+                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <option value="free">Free</option>
+                                <option value="pro">Pro</option>
+                                <option value="enterprise">Enterprise</option>
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+                        {editingShop && (editingShop.subscriptionPlan === 'pro' || editingShop.subscriptionPlan === 'enterprise') && (
+                            <p className="text-xs text-gray-500 mt-2">
+                                Subscription plans can only be upgraded or downgraded by contacting support.
+                            </p>
+                        )}
+                    </div>
+
+                    {errors?.general && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                            {Array.isArray(errors.general) ? errors.general.join(", ") : errors.general}
+                        </div>
+                    )}
+
+                    <div className="flex gap-3 mt-8">
+                        <button
+                            type="button"
+                            onClick={closeModal}
+                            className="flex-1 py-3 px-4 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="flex-1 py-3 px-4 rounded-xl bg-black text-white font-medium hover:bg-gray-800 transition-all shadow-lg shadow-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? "Saving..." : "Save Changes"}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
 
             {/* Delete Confirmation Modal */}
             <DeleteConfirmationModal

@@ -8,7 +8,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
+  if (!session || !session.user || !session.user.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -38,8 +38,8 @@ export async function PATCH(
       if (appointment.barbershop.ownerId === session.user.id) {
         isAuthorized = true;
       }
-    } else if (session.user.role === "capster") {
-      // Check if capster belongs to the barbershop
+    } else if (["capster", "admin", "co-owner"].includes(session.user.role)) {
+      // Check if user belongs to the barbershop via Capster table
       const capster = await prisma.capster.findUnique({
         where: { userId: session.user.id },
       });

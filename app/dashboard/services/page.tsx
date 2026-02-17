@@ -31,11 +31,11 @@ export default function ServicesPage() {
 
     useEffect(() => {
         if (status === "unauthenticated") router.push("/auth/signin");
-        if (status === "authenticated" && session?.user?.role !== "owner") {
+        if (status === "authenticated" && session?.user?.role !== "owner" && session?.user?.role !== "co-owner") {
             alert("Unauthorized");
             router.push("/dashboard");
         }
-        if (status === "authenticated" && session?.user?.role === "owner") {
+        if (status === "authenticated" && session?.user?.role === "owner" || session?.user?.role === "co-owner") {
             fetchBarbershops();
         }
     }, [status, session, router]);
