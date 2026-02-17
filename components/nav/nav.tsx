@@ -73,21 +73,21 @@ const Nav = () => {
                         />
                     )}
 
-                    {canAccess("calendar", session?.user?.role) && (
-                        <NavItem
-                            href="/dashboard/appointments"
-                            label="Calendar"
-                            icon={RiCalendarCheckFill}
-                            isActive={isActive("/dashboard/appointments")}
-                        />
-                    )}
-
                     {canAccess("services", session?.user?.role) && (
                         <NavItem
                             href="/dashboard/services"
                             label="Services"
                             icon={RiScissorsCutLine}
                             isActive={isActive("/dashboard/services")}
+                        />
+                    )}
+
+                    {canAccess("calendar", session?.user?.role) && (
+                        <NavItem
+                            href="/dashboard/appointments"
+                            label="Calendar"
+                            icon={RiCalendarCheckFill}
+                            isActive={isActive("/dashboard/appointments")}
                         />
                     )}
 
