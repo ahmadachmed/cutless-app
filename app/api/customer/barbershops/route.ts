@@ -13,15 +13,15 @@ export async function GET(req: NextRequest) {
         name: { contains: search }
       },
       select: {
-        id: true,
-        name: true,
-        address: true,
-        services: true,
-        capsters: {
-            include: {
-                user: { select: { name: true } }
-            }
+      id: true,
+      name: true,
+      address: true,
+      services: true,
+      teams: {
+        include: {
+          user: { select: { name: true } }
         }
+      }
       }
     });
     return NextResponse.json(barbershops);

@@ -17,7 +17,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   barbershops  Barbershop[]
-  capster      Capster?
+  team         Team?
   appointments Appointment[]
 }
 
@@ -38,12 +38,12 @@ model Barbershop {
   deletedAt        DateTime?
 
   owner        User          @relation(fields: [ownerId], references: [id])
-  capsters     Capster[]
+  teams     Team[]
   services     Service[]
   appointments Appointment[]
 }
 
-model Capster {
+model Team {
   id             String   @id @default(cuid())
   userId         String   @unique
   barbershopId   String
@@ -73,7 +73,7 @@ model Appointment {
   id           String   @id @default(cuid())
   customerId   String
   barbershopId String
-  capsterId    String
+  teamId       String
   serviceId    String
   date         DateTime
   status       String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
@@ -82,6 +82,6 @@ model Appointment {
 
   customer   User       @relation(fields: [customerId], references: [id])
   barbershop Barbershop @relation(fields: [barbershopId], references: [id])
-  capster    Capster    @relation(fields: [capsterId], references: [id])
+  team       Team       @relation(fields: [teamId], references: [id])
   service    Service    @relation(fields: [serviceId], references: [id])
 }

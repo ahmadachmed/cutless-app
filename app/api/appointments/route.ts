@@ -23,14 +23,14 @@ export async function GET(req: NextRequest) {
       const barbershopIds = barbershops.map((b) => b.id);
       whereClause = { barbershopId: { in: barbershopIds } };
     } else if (session.user.role === "capster") {
-        const capster = await prisma.capster.findUnique({
-            where: { userId: session.user.id }
-        });
-        if(capster) {
-             whereClause = { capsterId: capster.id };
-        } else {
-            return NextResponse.json([]); // Should not happen if data consistent
-        }
+      const team = await prisma.team.findUnique({
+        where: { userId: session.user.id }
+      });
+      if(team) {
+         whereClause = { teamId: team.id };
+      } else {
+        return NextResponse.json([]);
+      }
     }
 
     const appointments = await prisma.appointment.findMany({
@@ -38,10 +38,10 @@ export async function GET(req: NextRequest) {
       include: {
         service: true,
         barbershop: true,
-        capster: {
-            include: {
-                user: { select: { name: true } }
-            }
+        team: {
+          include: {
+            user: { select: { name: true } }
+          }
         },
         customer: { select: { name: true, email: true } }
       },
@@ -62,29 +62,29 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { barbershopId, capsterId, serviceId, date } = body;
+    const { barbershopId, teamId, serviceId, date } = body;
 
-    if (!barbershopId || !capsterId || !serviceId || !date) {
+    if (!barbershopId || !teamId || !serviceId || !date) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
     
-    // Basic validation: Check if capster/service belongs to barbershop
+    // Basic validation: Check if team member/service belongs to barbershop
     const service = await prisma.service.findFirst({
         where: { id: serviceId, barbershopId }
     });
     if (!service) return NextResponse.json({ error: "Invalid service for this barbershop" }, { status: 400 });
 
-    const capster = await prisma.capster.findFirst({
-        where: { id: capsterId, barbershopId }
+    const team = await prisma.team.findFirst({
+        where: { id: teamId, barbershopId }
     });
-    if (!capster) return NextResponse.json({ error: "Invalid capster for this barbershop" }, { status: 400 });
+    if (!team) return NextResponse.json({ error: "Invalid team member for this barbershop" }, { status: 400 });
 
 
     const appointment = await prisma.appointment.create({
       data: {
         customerId: session.user.id,
         barbershopId,
-        capsterId,
+        teamId,
         serviceId,
         date: new Date(date),
         status: "PENDING"

@@ -9,7 +9,7 @@ type Appointment = {
     status: string;
     service: { name: string; duration: number };
     customer: { name: string | null };
-    capster: { user: { name: string | null } };
+    team: { user: { name: string | null } };
 };
 
 type AppointmentWithLane = Appointment & { lane: number };
@@ -158,7 +158,7 @@ export default function Timeline({ appointments }: { appointments: Appointment[]
                                                 animate={{ scaleY: 1 }}
                                                 className={`absolute h-8 rounded-full ${bgColor} flex items-center px-3 shadow-sm cursor-pointer hover:shadow-md z-10 transition-all group/item`}
                                                 style={{ left, width, minWidth: "40px", top: `${top}px` }}
-                                                title={`${appt.service.name} | Cust: ${appt.customer.name} | Cap: ${appt.capster?.user?.name}`}
+                                                title={`${appt.service.name} | Cust: ${appt.customer.name} | Team: ${appt.team?.user?.name}`}
                                             >
                                                 <div className="overflow-hidden whitespace-nowrap text-xs font-bold flex gap-2 w-full">
                                                     {/* Show Time if space allows */}
@@ -173,7 +173,7 @@ export default function Timeline({ appointments }: { appointments: Appointment[]
                                                 <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover/item:block bg-gray-900 text-white text-xs p-3 rounded-lg whitespace-nowrap z-50 shadow-xl">
                                                     <div className="font-bold text-sm mb-1 text-white">{appt.service.name}</div>
                                                     <div className="text-gray-300">Customer: <span className="text-white">{appt.customer.name}</span></div>
-                                                    <div className="text-gray-300">Capster: <span className="text-white">{appt.capster?.user?.name || "Unassigned"}</span></div>
+                                                    <div className="text-gray-300">Team: <span className="text-white">{appt.team?.user?.name || "Unassigned"}</span></div>
                                                     <div className="text-gray-400 mt-1 text-[10px]">{new Date(appt.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {appt.status}</div>
                                                 </div>
                                             </motion.div>

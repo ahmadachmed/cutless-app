@@ -65,10 +65,10 @@ const Nav = () => {
 
                     {(session?.user?.role === "owner" || session?.user?.role === "capster" || session?.user?.role === "admin" || session?.user?.role === "co-owner") && (
                         <NavItem
-                            href="/dashboard/capsters"
+                            href="/dashboard/teams"
                             label="Teams"
                             icon={RiTeamFill}
-                            isActive={isActive("/dashboard/capsters")}
+                            isActive={isActive("/dashboard/teams")}
                         />
                     )}
 

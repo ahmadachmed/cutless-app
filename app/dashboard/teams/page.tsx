@@ -1,10 +1,10 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
-import { getCapstersForOwner, getBarbershopsForOwner } from "@/app/lib/dal";
-import CapsterClient from "./CapsterClient";
+import { getTeamsForOwner, getBarbershopsForOwner } from "@/app/lib/dal";
+import TeamClient from "./TeamClient";
 
-export default async function CapstersPage() {
+export default async function TeamsPage() {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -14,7 +14,6 @@ export default async function CapstersPage() {
   const user = session.user;
 
   if (!user || !user.id || (user.role !== "owner" && user.role !== "admin" && user.role !== "co-owner")) {
-    // Ideally use a more robust access denied page or redirect
     return (
       <div className="p-4">
         <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
@@ -23,11 +22,10 @@ export default async function CapstersPage() {
     );
   }
 
-  // Fetch initial data
-  const capsters = await getCapstersForOwner(user.id); // Validated that this now delegates to getCapstersForUser
+  const teams = await getTeamsForOwner(user.id);
   const barbershops = await getBarbershopsForOwner(user.id);
 
   return (
-    <CapsterClient initialCapsters={capsters} initialBarbershops={barbershops} />
+    <TeamClient initialTeams={teams} initialBarbershops={barbershops} />
   );
 }

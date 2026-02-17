@@ -15,7 +15,7 @@ type Barbershop = {
     address: string;
     phoneNumber: string;
     subscriptionPlan: string;
-    capsters?: { id: string }[];
+    teams?: { id: string }[];
 };
 
 type Appointment = {
@@ -25,7 +25,7 @@ type Appointment = {
     status: string;
     service: { name: string; duration: number };
     customer: { name: string | null };
-    capster: { user: { name: string | null } };
+    team: { user: { name: string | null } };
     [key: string]: unknown;
 };
 
@@ -50,7 +50,7 @@ export default function DashboardClient({ barbershops, appointmentCounts, appoin
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No Barbershops Found</h3>
                 <p className="text-gray-500 max-w-sm mb-6">
-                    It looks like you haven&apos;t set up your barbershop yet. Create your first store to start managing appointments and capsters.
+                    It looks like you haven&apos;t set up your barbershop yet. Create your first store to start managing appointments and team members.
                 </p>
                 <Link
                     href="/dashboard/barbershops"
@@ -84,10 +84,10 @@ export default function DashboardClient({ barbershops, appointmentCounts, appoin
                     {/* Top Row: Info and Metrics */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                        {/* Capsters Card */}
-                        <Link href="/dashboard/capsters" className="bg-[#EAEEEB] rounded-lg shadow p-6 border border-gray-100 flex flex-col justify-between hover:border-blue-200 transition-colors group">
+                        {/* Teams Card */}
+                        <Link href="/dashboard/teams" className="bg-[#EAEEEB] rounded-lg shadow p-6 border border-gray-100 flex flex-col justify-between hover:border-blue-200 transition-colors group">
                             <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-medium text-gray-900">Capsters</h3>
+                                <h3 className="text-lg font-medium text-gray-900">Teams</h3>
                                 <div className="p-2 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors">
                                     <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -95,7 +95,7 @@ export default function DashboardClient({ barbershops, appointmentCounts, appoin
                                 </div>
                             </div>
                             <div className="mt-4">
-                                <p className="text-3xl font-bold text-gray-900">{selectedShop.capsters?.length || 0}</p>
+                                <p className="text-3xl font-bold text-gray-900">{selectedShop.teams?.length || 0}</p>
                                 <p className="text-sm text-gray-500 mt-1">Active staff members</p>
                             </div>
                         </Link>

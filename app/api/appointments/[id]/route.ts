@@ -33,17 +33,19 @@ export async function PATCH(
     // Authorization
     let isAuthorized = false;
 
-    if (session.user.role === "owner") {
+    const role = session.user.role || "";
+
+    if (role === "owner") {
       // Check if owner owns the barbershop
       if (appointment.barbershop.ownerId === session.user.id) {
         isAuthorized = true;
       }
-    } else if (["capster", "admin", "co-owner"].includes(session.user.role)) {
-      // Check if user belongs to the barbershop via Capster table
-      const capster = await prisma.capster.findUnique({
+    } else if (["capster", "admin", "co-owner"].includes(role)) {
+      // Check if user belongs to the barbershop via Team table
+      const team = await prisma.team.findUnique({
         where: { userId: session.user.id },
       });
-      if (capster && capster.barbershopId === appointment.barbershopId) {
+      if (team && team.barbershopId === appointment.barbershopId) {
         isAuthorized = true;
       }
     }

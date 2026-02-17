@@ -12,7 +12,7 @@ type Appointment = {
     status: string;
     service: { name: string; duration: number; price: number };
     barbershop: { name: string };
-    capster: { user: { name: string | null } };
+    team: { user: { name: string | null } };
     customer: { name: string | null; email: string };
 };
 
@@ -111,8 +111,8 @@ export default function AppointmentsClient({ appointments }: { appointments: App
                                         <span className="font-semibold text-white">{appt.customer.name || appt.customer.email}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span>Capster:</span>
-                                        <span className="font-semibold text-white">{appt.capster.user.name || "Unassigned"}</span>
+                                        <span>Team:</span>
+                                        <span className="font-semibold text-white">{appt.team.user.name || "Unassigned"}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span>Price:</span>
