@@ -18,6 +18,7 @@ import { CgSpinner } from "react-icons/cg";
 import { FaMobileAlt } from "react-icons/fa";
 
 import { NavItem } from "./NavItem";
+import { canAccess } from "@/lib/permissions";
 
 const Nav = () => {
     const { data: session } = useSession();
@@ -45,7 +46,7 @@ const Nav = () => {
             <div className="mb-8">
                 <p className="px-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Menu</p>
                 <div className="space-y-1">
-                    {(session?.user?.role === "owner" || session?.user?.role === "admin" || session?.user?.role === "co-owner") && (
+                    {canAccess("dashboard", session?.user?.role) && (
                         <NavItem
                             href="/dashboard"
                             label="Dashboard"
@@ -54,7 +55,7 @@ const Nav = () => {
                         />
                     )}
 
-                    {(session?.user?.role === "owner" || session?.user?.role === "capster" || session?.user?.role === "co-owner") && (
+                    {canAccess("barbershop", session?.user?.role) && (
                         <NavItem
                             href="/dashboard/barbershops"
                             label="Barbershop"
@@ -63,7 +64,7 @@ const Nav = () => {
                         />
                     )}
 
-                    {(session?.user?.role === "owner" || session?.user?.role === "capster" || session?.user?.role === "admin" || session?.user?.role === "co-owner") && (
+                    {canAccess("teams", session?.user?.role) && (
                         <NavItem
                             href="/dashboard/teams"
                             label="Teams"
@@ -72,7 +73,7 @@ const Nav = () => {
                         />
                     )}
 
-                    {(session?.user?.role === "owner" || session?.user?.role === "capster" || session?.user?.role === "admin" || session?.user?.role === "co-owner") && (
+                    {canAccess("calendar", session?.user?.role) && (
                         <NavItem
                             href="/dashboard/appointments"
                             label="Calendar"
@@ -81,7 +82,7 @@ const Nav = () => {
                         />
                     )}
 
-                    {(session?.user?.role === "owner" || session?.user?.role === "co-owner") && (
+                    {canAccess("services", session?.user?.role) && (
                         <NavItem
                             href="/dashboard/services"
                             label="Services"
@@ -90,7 +91,7 @@ const Nav = () => {
                         />
                     )}
 
-                    {(session?.user?.role === "owner" || session?.user?.role === "co-owner") && (
+                    {canAccess("book", session?.user?.role) && (
                         <NavItem
                             href="/dashboard/book"
                             label="Book"
