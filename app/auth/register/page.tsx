@@ -83,7 +83,7 @@ export default function RegisterPage() {
             ))}
             <Select onChange={e => setFormData({ ...formData, role: e.target.value })} value={formData.role}  >
               <option value="customer">Customer</option>
-              <option value="capster">Capster</option>
+                                <option value="capster">Capster</option>
               <option value="owner">Owner</option>
             </Select>
             {errorMessage && <div className="mb-4 p-2 bg-red-200 text-red-800 rounded">{errorMessage}</div>}

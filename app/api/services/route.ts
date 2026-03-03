@@ -48,12 +48,12 @@ export async function POST(req: NextRequest) {
     if (barbershop.ownerId === session.user.id) {
         isAuthorized = true;
     } else if (session.user.role === "co-owner") {
-        const capster = await prisma.capster.findUnique({
-            where: { userId: session.user.id }
-        });
-        if (capster && capster.barbershopId === barbershopId) {
-            isAuthorized = true;
-        }
+      const team = await prisma.team.findUnique({
+        where: { userId: session.user.id }
+      });
+      if (team && team.barbershopId === barbershopId) {
+        isAuthorized = true;
+      }
     }
 
     if (!isAuthorized) {

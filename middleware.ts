@@ -1,22 +1,20 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import { PERMISSIONS } from "@/lib/permissions";
 
-const roleRequired: Record<string, string[]> = {
-  "/dashboard/barbershops": ["owner", "co-owner"],
-  "/dashboard": ["owner", "admin", "capster", "co-owner"],
-};
+// Map incoming path prefixes to permission keys defined in PERMISSIONS
+const PATH_TO_PERMISSION: [string, string][] = [
+  ["/dashboard/barbershops", "barbershop"],
+  ["/dashboard/teams", "teams"],
+  ["/dashboard/appointments", "calendar"],
+  ["/dashboard/services", "services"],
+  ["/dashboard/book", "book"],
+  ["/dashboard", "dashboard"],
+];
 
 export default withAuth(
   function middleware(req) {
     const { pathname } = req.nextUrl;
-
-    // role comes from jwt callback: token.role = user.role
-    const role = req.nextauth.token?.role as string | undefined;
-
-    const matchedPath = Object.keys(roleRequired).find((route) =>
-      pathname.startsWith(route)
-    );
-    const allowedRoles = matchedPath ? roleRequired[matchedPath] : undefined;
 
     // If user has no token at all, redirect to sign in
     if (!req.nextauth.token) {
@@ -25,8 +23,21 @@ export default withAuth(
       return NextResponse.redirect(signInUrl);
     }
 
-    // If a route requires roles and user doesn't match, redirect away
-    if (allowedRoles && (!role || !allowedRoles.includes(role))) {
+    // role comes from jwt callback: token.role = user.role
+    const role = req.nextauth.token?.role as string | undefined;
+
+    // Find the first matching path mapping
+    const matched = PATH_TO_PERMISSION.find(([prefix]) => pathname.startsWith(prefix));
+    if (!matched) return NextResponse.next();
+
+    const permissionKey = matched[1];
+    const allowed = PERMISSIONS[permissionKey];
+
+    // If permission is null => any authenticated user allowed
+    if (allowed === null) return NextResponse.next();
+
+    // If allowed is undefined (unknown key) or role is missing or not included => redirect
+    if (!allowed || !role || !allowed.includes(role as any)) {
       return NextResponse.redirect(new URL("/", req.url));
     }
 

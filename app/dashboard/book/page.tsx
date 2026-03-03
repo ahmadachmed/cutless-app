@@ -11,7 +11,7 @@ type Service = {
     duration: number;
 };
 
-type Capster = {
+type Team = {
     id: string;
     specialization: string | null;
     user: { name: string | null };
@@ -22,7 +22,7 @@ type Barbershop = {
     name: string;
     address: string;
     services: Service[];
-    capsters: Capster[];
+    teams: Team[];
 };
 
 export default function BookPage() {
@@ -33,7 +33,7 @@ export default function BookPage() {
     const [barbershops, setBarbershops] = useState<Barbershop[]>([]);
     const [selectedShop, setSelectedShop] = useState<Barbershop | null>(null);
     const [selectedService, setSelectedService] = useState<Service | null>(null);
-    const [selectedCapster, setSelectedCapster] = useState<Capster | null>(null);
+    const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
     const [date, setDate] = useState("");
     const [time, setTime] = useState("");
     const [loading, setLoading] = useState(false);
@@ -60,7 +60,7 @@ export default function BookPage() {
     }
 
     async function submitBooking() {
-        if (!selectedShop || !selectedCapster || !selectedService || !date || !time) return;
+        if (!selectedShop || !selectedTeam || !selectedService || !date || !time) return;
         setLoading(true);
         try {
             const dateTime = new Date(`${date}T${time}`);
@@ -69,7 +69,7 @@ export default function BookPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     barbershopId: selectedShop.id,
-                    capsterId: selectedCapster.id,
+                    teamId: selectedTeam.id,
                     serviceId: selectedService.id,
                     date: dateTime.toISOString()
                 })
@@ -95,7 +95,7 @@ export default function BookPage() {
             <div className="flex justify-between mb-8 border-b pb-4">
                 <span className={`font-semibold ${step >= 1 ? 'text-blue-600' : 'text-gray-400'}`}>1. Shop</span>
                 <span className={`font-semibold ${step >= 2 ? 'text-blue-600' : 'text-gray-400'}`}>2. Service</span>
-                <span className={`font-semibold ${step >= 3 ? 'text-blue-600' : 'text-gray-400'}`}>3. Capster</span>
+                <span className={`font-semibold ${step >= 3 ? 'text-blue-600' : 'text-gray-400'}`}>3. Team</span>
                 <span className={`font-semibold ${step >= 4 ? 'text-blue-600' : 'text-gray-400'}`}>4. Time</span>
             </div>
 
@@ -142,20 +142,20 @@ export default function BookPage() {
                 {step === 3 && selectedShop && (
                     <div>
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold">Select Capster</h2>
+                            <h2 className="text-xl font-semibold">Select Team</h2>
                             <button onClick={() => setStep(2)} className="text-sm text-gray-500 hover:text-gray-700">Back</button>
                         </div>
                         <div className="grid gap-3">
-                            {selectedShop.capsters.length > 0 ? selectedShop.capsters.map(capster => (
+                            {selectedShop.teams.length > 0 ? selectedShop.teams.map(team => (
                                 <button
-                                    key={capster.id}
-                                    onClick={() => { setSelectedCapster(capster); setStep(4); }}
+                                    key={team.id}
+                                    onClick={() => { setSelectedTeam(team); setStep(4); }}
                                     className="text-left p-4 border rounded hover:bg-blue-50 hover:border-blue-300 transition-colors w-full"
                                 >
-                                    <div className="font-medium">{capster.user.name || "Unknown Capster"}</div>
-                                    <div className="text-sm text-gray-500">{capster.specialization || "General"}</div>
+                                    <div className="font-medium">{team.user.name || "Unknown Team"}</div>
+                                    <div className="text-sm text-gray-500">{team.specialization || "General"}</div>
                                 </button>
-                            )) : <p>No capsters available.</p>}
+                            )) : <p>No team members available.</p>}
                         </div>
                     </div>
                 )}
@@ -189,7 +189,7 @@ export default function BookPage() {
 
                             <div className="pt-4 border-t mt-4">
                                 <p className="mb-2 text-sm text-gray-600">
-                                    Booking <strong>{selectedService?.name}</strong> with <strong>{selectedCapster?.user.name}</strong> at <strong>{selectedShop?.name}</strong>.
+                                    Booking <strong>{selectedService?.name}</strong> with <strong>{selectedTeam?.user.name}</strong> at <strong>{selectedShop?.name}</strong>.
                                 </p>
                                 <button
                                     onClick={submitBooking}

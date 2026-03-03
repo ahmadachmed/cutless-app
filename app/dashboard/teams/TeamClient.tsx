@@ -7,7 +7,7 @@ import { FaPlus, FaTrash, FaUserTie, FaEnvelope, FaStore, FaCut } from "react-ic
 import Modal from "@/components/ui/Modal/Modal";
 import DeleteConfirmationModal from "@/components/ui/Modal/DeleteConfirmationModal";
 
-type Capster = {
+type Team = {
     id: string;
     specialization: string | null;
     user: { id: string; name: string | null; email: string; role: string };
@@ -19,12 +19,11 @@ type Barbershop = {
     name: string;
 }
 
-export default function CapsterClient({ initialCapsters, initialBarbershops }: { initialCapsters: Capster[], initialBarbershops: Barbershop[] }) {
+export default function TeamClient({ initialTeams, initialBarbershops }: { initialTeams: Team[], initialBarbershops: Barbershop[] }) {
     const router = useRouter();
     const { data: session, status } = useSession();
-    const [capsters, setCapsters] = useState<Capster[]>(initialCapsters);
+    const [teams, setTeams] = useState<Team[]>(initialTeams);
 
-    // Form State
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -33,18 +32,12 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
     const [role, setRole] = useState("capster");
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    // Modal State
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(false);
     const [barbershops, setBarbershops] = useState<Barbershop[]>(initialBarbershops);
-
-    // Authentication check is handled by middleware or server component usually, 
-    // but good to keep a check here too if needed, or rely on Server Component to redirect.
-
-
 
     const openAddModal = () => {
         setEditingId(null);
@@ -57,21 +50,20 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
         setIsAddModalOpen(true);
     };
 
-    const openEditModal = (capster: Capster) => {
-        setEditingId(capster.id);
-        setName(capster.user.name || "");
-        setEmail(capster.user.email);
-        setPassword(""); // Password usually left blank on edit unless changing
-        setBarbershopId(capster.barbershop.id);
-        setSpecialization(capster.specialization || "");
-        setRole(capster.user.role || "capster");
+    const openEditModal = (team: Team) => {
+        setEditingId(team.id);
+        setName(team.user.name || "");
+        setEmail(team.user.email);
+        setPassword("");
+        setBarbershopId(team.barbershop.id);
+        setSpecialization(team.specialization || "");
+        setRole(team.user.role || "capster");
         setIsAddModalOpen(true);
     };
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
 
-        // For Add: require password. For Edit: password is optional (only if changing)
         if (!name || !email || (!editingId && !password) || !barbershopId) {
             alert("Name, Email, Password (for new users), and Barbershop ID are required");
             return;
@@ -79,10 +71,10 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
 
         setLoading(true);
         try {
-            const url = editingId ? "/api/capsters" : "/api/capsters";
+            const url = editingId ? "/api/teams" : "/api/teams";
             const method = editingId ? "PUT" : "POST";
             const body = editingId
-                ? { id: editingId, name, email, role, specialization } // Add password here if we allow updating it
+                ? { id: editingId, name, email, role, specialization }
                 : { name, email, password, barbershopId, specialization, role };
 
             const res = await fetch(url, {
@@ -93,19 +85,18 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
             });
 
             if (res.ok) {
-                // Refresh list
-                await fetch("/api/capsters", { credentials: "include" })
+                await fetch("/api/teams", { credentials: "include" })
                     .then((res) => res.json())
-                    .then(setCapsters);
+                    .then(setTeams);
                 setIsAddModalOpen(false);
                 setEditingId(null);
             }
             else {
                 const data = await res.json();
-                alert(data.error || "Failed to save capster");
+                alert(data.error || "Failed to save team member");
             }
         } catch {
-            alert("Error saving capster");
+            alert("Error saving team member");
         }
         setLoading(false);
     }
@@ -119,26 +110,25 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
         if (!deletingId) return;
         setLoading(true);
         try {
-            const res = await fetch(`/api/capsters?id=${deletingId}`, {
+            const res = await fetch(`/api/teams?id=${deletingId}`, {
                 method: "DELETE",
                 credentials: "include",
             });
             if (res.ok) {
-                setCapsters((prev) => prev.filter((c) => c.id !== deletingId));
+                setTeams((prev) => prev.filter((c) => c.id !== deletingId));
                 setIsDeleteModalOpen(false);
                 setDeletingId(null);
             } else {
-                alert("Failed to delete capster");
+                alert("Failed to delete team member");
             }
         } catch {
-            alert("Error deleting capster");
+            alert("Error deleting team member");
         }
         setLoading(false);
     }
 
     return (
         <div className="bg-[#F3F3F3] min-h-screen p-5 space-y-8 rounded-3xl">
-            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-4xl font-light text-gray-900">Teams</h1>
@@ -153,8 +143,7 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
                 </button>
             </div>
 
-            {/* Content */}
-            {capsters.length === 0 ? (
+            {teams.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-gray-300 rounded-2xl bg-white/50 text-gray-500">
                     <FaUserTie className="text-4xl mb-3 opacity-30" />
                     <p>No team members found. Add one to get started.</p>
@@ -174,7 +163,7 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {capsters.map((c) => (
+                                {teams.map((c) => (
                                     <tr key={c.id} className="hover:bg-gray-50/50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
@@ -233,7 +222,6 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
                 </div>
             )}
 
-            {/* Add Modal */}
             <Modal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
@@ -345,7 +333,6 @@ export default function CapsterClient({ initialCapsters, initialBarbershops }: {
                 </form>
             </Modal>
 
-            {/* Delete Confirmation Modal */}
             <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
