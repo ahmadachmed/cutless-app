@@ -8,13 +8,16 @@ generator client {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String?
-  email     String   @unique
-  password  String?
-  role      String // "customer", "capster", "owner", "admin", "co-owner"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String    @id @default(cuid())
+  name                  String?
+  email                 String    @unique
+  password              String?
+  role                  String // "customer", "capster", "owner", "admin", "co-owner"
+  subscriptionPlan      String    @default("free") // free/pro/enterprise
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   barbershops  Barbershop[]
   team         Team?
@@ -27,7 +30,6 @@ model Barbershop {
   address          String
   phoneNumber      String
   ownerId          String
-  subscriptionPlan String // free/pro/enterprise
   openTime         String?   @default("09:00")
   closeTime        String?   @default("21:00")
   breakStartTime   String?

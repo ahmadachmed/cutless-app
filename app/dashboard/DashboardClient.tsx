@@ -14,8 +14,13 @@ type Barbershop = {
     name: string;
     address: string;
     phoneNumber: string;
-    subscriptionPlan: string;
     teams?: { id: string }[];
+};
+
+type Subscription = {
+    subscriptionPlan: string;
+    subscriptionStartDate?: string | null;
+    subscriptionEndDate?: string | null;
 };
 
 type Appointment = {
@@ -29,7 +34,7 @@ type Appointment = {
     [key: string]: unknown;
 };
 
-export default function DashboardClient({ barbershops, appointmentCounts, appointments }: { barbershops: Barbershop[], appointmentCounts?: Record<string, { pending: number; confirmed: number; cancelled: number }>, appointments: Appointment[] }) {
+export default function DashboardClient({ barbershops, appointmentCounts, appointments, subscription }: { barbershops: Barbershop[], appointmentCounts?: Record<string, { pending: number; confirmed: number; cancelled: number }>, appointments: Appointment[], subscription: Subscription }) {
     const [selectedShopId, setSelectedShopId] = useState<string>(
         barbershops.length > 0 ? barbershops[0].id : ""
     );
@@ -81,6 +86,63 @@ export default function DashboardClient({ barbershops, appointmentCounts, appoin
             {/* Content */}
             {selectedShop && (
                 <div className="flex flex-col gap-6">
+                    {/* Subscription Status Card */}
+                    <div className="bg-[#EAEEEB] rounded-lg shadow p-6 border border-gray-100">
+                        {(() => {
+                            const plan = subscription.subscriptionPlan;
+                            const endDate = subscription.subscriptionEndDate ? new Date(subscription.subscriptionEndDate) : null;
+                            const isExpired = plan !== "free" && endDate && new Date() >= endDate;
+                            const remainingDays = endDate ? Math.max(0, Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : null;
+
+                            return (
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`p-3 rounded-full ${
+                                            isExpired ? "bg-red-100" : plan === "free" ? "bg-gray-100" : "bg-blue-100"
+                                        }`}>
+                                            <svg className={`w-6 h-6 ${
+                                                isExpired ? "text-red-600" : plan === "free" ? "text-gray-600" : "text-blue-600"
+                                            }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-medium text-gray-900">Subscription</h3>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className={`px-3 py-1 text-xs font-semibold rounded-full uppercase tracking-wide ${
+                                                    isExpired
+                                                        ? "bg-red-100 text-red-800"
+                                                        : plan === "free"
+                                                            ? "bg-gray-200 text-gray-800"
+                                                            : "bg-blue-100 text-blue-800"
+                                                }`}>
+                                                    {isExpired ? "Expired" : `${plan} Plan`}
+                                                </span>
+                                                {plan !== "free" && remainingDays !== null && !isExpired && (
+                                                    <span className={`text-sm ${
+                                                        remainingDays <= 7 ? "text-red-500 font-medium" : "text-gray-500"
+                                                    }`}>
+                                                        {remainingDays} day{remainingDays !== 1 ? "s" : ""} remaining
+                                                    </span>
+                                                )}
+                                                {isExpired && (
+                                                    <span className="text-sm text-red-500 font-medium">
+                                                        Your plan has expired
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {(plan === "free" || isExpired) && (
+                                        <button className="px-4 py-2 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-all shadow-md">
+                                            {isExpired ? "Renew Plan" : "Upgrade Plan"}
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })()}
+                    </div>
+
                     {/* Top Row: Info and Metrics */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
@@ -160,9 +222,6 @@ export default function DashboardClient({ barbershops, appointmentCounts, appoin
                             <div>
                                 <div className="flex justify-between items-start mb-4">
                                     <h2 className="text-xl font-semibold text-gray-900">{selectedShop.name}</h2>
-                                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 uppercase tracking-wide">
-                                        {selectedShop.subscriptionPlan} Plan
-                                    </span>
                                 </div>
                                 <div className="space-y-3 text-gray-600">
                                     <div>

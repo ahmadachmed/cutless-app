@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import bcrypt from "bcrypt";
+import { checkTeamLimit } from "@/app/lib/subscription";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -57,6 +58,15 @@ export async function POST(req: NextRequest) {
 
   if (!name || !email || !password || !barbershopId) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  // Check team member limit before adding
+  const limitCheck = await checkTeamLimit(barbershopId);
+  if (!limitCheck.allowed) {
+    return NextResponse.json(
+      { error: limitCheck.message },
+      { status: 403 }
+    );
   }
 
   if (session.user.role === "owner") {
