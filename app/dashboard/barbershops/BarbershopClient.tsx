@@ -12,7 +12,6 @@ type Barbershop = {
     name: string;
     address: string;
     phoneNumber: string;
-    subscriptionPlan: string;
     openTime?: string | null;
     closeTime?: string | null;
     breakStartTime?: string | null;
@@ -37,7 +36,6 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
         name: "",
         address: "",
         phoneNumber: "",
-        subscriptionPlan: "free",
         openTime: "09:00",
         closeTime: "21:00",
         breakStartTime: "",
@@ -50,7 +48,6 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
             name: "",
             address: "",
             phoneNumber: "",
-            subscriptionPlan: "free",
             openTime: "09:00",
             closeTime: "21:00",
             breakStartTime: "",
@@ -71,7 +68,6 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
             name: shop.name,
             address: shop.address,
             phoneNumber: shop.phoneNumber,
-            subscriptionPlan: shop.subscriptionPlan,
             openTime: shop.openTime || "09:00",
             closeTime: shop.closeTime || "21:00",
             breakStartTime: shop.breakStartTime || "",
@@ -204,9 +200,6 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-lg text-gray-900 leading-tight">{shop.name}</h3>
-                                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100 uppercase tracking-wide">
-                                            {shop.subscriptionPlan}
-                                        </span>
                                     </div>
                                 </div>
                                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -361,30 +354,6 @@ export default function BarbershopClient({ initialBarbershops }: { initialBarber
                                 </button>
                             ))}
                         </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Subscription Plan</label>
-                        <div className="relative">
-                            <select
-                                value={formData.subscriptionPlan}
-                                onChange={(e) => setFormData({ ...formData, subscriptionPlan: e.target.value })}
-                                disabled={!!editingShop && (editingShop.subscriptionPlan === 'pro' || editingShop.subscriptionPlan === 'enterprise')}
-                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-gray-400 transition-all appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <option value="free">Free</option>
-                                <option value="pro">Pro</option>
-                                <option value="enterprise">Enterprise</option>
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                        </div>
-                        {editingShop && (editingShop.subscriptionPlan === 'pro' || editingShop.subscriptionPlan === 'enterprise') && (
-                            <p className="text-xs text-gray-500 mt-2">
-                                Subscription plans can only be upgraded or downgraded by contacting support.
-                            </p>
-                        )}
                     </div>
 
                     {errors?.general && (

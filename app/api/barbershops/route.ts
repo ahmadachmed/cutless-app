@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/app/lib/auth-utils";
 import { getBarbershopsForOwner, createBarbershop, updateBarbershop, deleteBarbershop } from "@/app/lib/dal";
+import { checkBarbershopLimit } from "@/app/lib/subscription";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 
@@ -23,6 +24,15 @@ export async function POST(req: NextRequest) {
   try {
     requireRole(session, ["owner"]);
     const body = await req.json();
+
+    // Check barbershop limit before creating
+    const limitCheck = await checkBarbershopLimit(session?.user?.id as string);
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { error: limitCheck.message },
+        { status: 403 }
+      );
+    }
     
     // Call DAL
     const result = await createBarbershop(body, session?.user?.id as string);

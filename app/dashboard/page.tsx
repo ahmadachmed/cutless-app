@@ -46,6 +46,15 @@ export default async function DashboardPage() {
     });
 
     return (
-        <DashboardClient barbershops={profile!.barbershops} appointmentCounts={appointmentCounts} appointments={appointments} />
+        <DashboardClient
+            barbershops={profile!.barbershops}
+            appointmentCounts={appointmentCounts}
+            appointments={appointments}
+            subscription={{
+                subscriptionPlan: profile!.subscriptionPlan,
+                subscriptionStartDate: profile!.subscriptionStartDate?.toISOString() ?? null,
+                subscriptionEndDate: profile!.subscriptionEndDate?.toISOString() ?? null,
+            }}
+        />
     );
 }

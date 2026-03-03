@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { BarbershopFormSchema } from "@/app/lib/definitions";
+import { computeSubscriptionDates, checkAndDowngradeIfExpired } from "@/app/lib/subscription";
 
 export async function verifySession() {
   const session = await getServerSession(authOptions);
@@ -20,6 +21,9 @@ export async function getOwnerWithBarbershops(userId: string) {
       name: true,
       email: true,
       role: true,
+      subscriptionPlan: true,
+      subscriptionStartDate: true,
+      subscriptionEndDate: true,
       createdAt: true,
       updatedAt: true,
     }
@@ -27,9 +31,12 @@ export async function getOwnerWithBarbershops(userId: string) {
 
   if (!user) return null;
 
+  // Lazy expiration check on the user's subscription
+  const checkedUser = await checkAndDowngradeIfExpired(user);
+
   let barbershops: any[] = [];
 
-  if (user.role === "owner") {
+  if (checkedUser.role === "owner") {
       barbershops = await prisma.barbershop.findMany({
           where: { ownerId: userId, deletedAt: null },
           include: { teams: true }
@@ -37,7 +44,7 @@ export async function getOwnerWithBarbershops(userId: string) {
   }
 
     // Also check for secondary ownership/linkage via Team for all roles including owner
-    if (user.role === "owner" || user.role === "admin" || user.role === "capster" || user.role === "co-owner") {
+    if (checkedUser.role === "owner" || checkedUser.role === "admin" || checkedUser.role === "capster" || checkedUser.role === "co-owner") {
       // Find the barbershop this user belongs to
       const teamEntry = await prisma.team.findUnique({
         where: { userId },
@@ -56,7 +63,7 @@ export async function getOwnerWithBarbershops(userId: string) {
       }
     }
 
-  return { ...user, barbershops };
+  return { ...checkedUser, barbershops };
 }
 
 // Team member + their barbershop
@@ -158,7 +165,7 @@ export async function createBarbershop(data: unknown, ownerId: string) {
         return { errors: validation.error.flatten().fieldErrors };
     }
 
-    const { name, address, phoneNumber, subscriptionPlan, openTime, closeTime, breakStartTime, breakEndTime, daysOpen } = validation.data;
+    const { name, address, phoneNumber, openTime, closeTime, breakStartTime, breakEndTime, daysOpen } = validation.data;
 
     // Check for existing barbershop with same name (excluding soft-deleted ones)
     const existingBarbershop = await prisma.barbershop.findFirst({
@@ -178,7 +185,6 @@ export async function createBarbershop(data: unknown, ownerId: string) {
                 name,
                 address,
                 phoneNumber,
-                subscriptionPlan,
                 openTime,
                 closeTime,
                 breakStartTime,
@@ -202,7 +208,7 @@ export async function updateBarbershop(data: unknown, ownerId: string) {
         return { errors: validation.error.flatten().fieldErrors };
     }
 
-    const { id, name, address, phoneNumber, subscriptionPlan, openTime, closeTime, breakStartTime, breakEndTime, daysOpen } = validation.data;
+    const { id, name, address, phoneNumber, openTime, closeTime, breakStartTime, breakEndTime, daysOpen } = validation.data;
 
     if (!id) {
         return { error: "Missing id", code: 400 };
@@ -220,7 +226,6 @@ export async function updateBarbershop(data: unknown, ownerId: string) {
                 name,
                 address,
                 phoneNumber,
-                subscriptionPlan,
                 openTime,
                 closeTime,
                 breakStartTime,
@@ -297,6 +302,40 @@ export async function getBarbershopsForUser(userId: string) {
     }
 
   return barbershops;
+}
+
+// ── User Subscription Management ─────────────────────────────────────────────
+
+export async function getUserSubscription(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      subscriptionPlan: true,
+      subscriptionStartDate: true,
+      subscriptionEndDate: true,
+    },
+  });
+
+  if (!user) return null;
+
+  // Lazy expiration check
+  return checkAndDowngradeIfExpired(user);
+}
+
+export async function updateUserSubscription(userId: string, plan: string) {
+  const { subscriptionStartDate, subscriptionEndDate } = computeSubscriptionDates(plan);
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      subscriptionPlan: plan,
+      subscriptionStartDate,
+      subscriptionEndDate,
+    },
+  });
+
+  return updated;
 }
 
 // Teams for a user (Owner: all in owned/linked shops, Admin: all in same shop)
